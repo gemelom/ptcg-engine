@@ -1,0 +1,29 @@
+Pokémon: 20
+4 Archeops SIT 147
+3 Lugia V SIT 138
+3 Lugia VSTAR SIT 139
+3 Minccino BRS 124
+3 Cinccino TEF 137
+2 Lumineon V BRS 40
+1 Snorlax LOR 143
+1 Flutter Mane PRE 43
+
+Trainer: 24
+3 Professor's Research PAF 87
+3 Iono PAF 80
+3 Boss's Orders PAL 265
+1 Jacq SVI 175
+1 Serena SIT 164
+4 Capturing Aroma SIT 153
+4 Ultra Ball PAF 91
+3 Great Ball PAL 183
+1 Master Ball TEF 153
+1 Collapsed Stadium BRS 137
+
+Energy: 16
+4 Jet Energy PAL 190
+4 Gift Energy LOR 171
+3 Double Turbo Energy BRS 151
+3 Mist Energy TEF 161
+1 V Guard Energy SIT 169
+1 Therapeutic Energy PAL 193

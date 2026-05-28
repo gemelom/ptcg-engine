@@ -1,0 +1,32 @@
+Pokémon: 13
+2 Miraidon ex SVI 253
+2 Iron Hands ex PAR 248
+1 Radiant Greninja ASR 46
+1 Squawkabilly ex PAL 264
+1 Mew ex MEW 151
+1 Rotom V CRZ 45
+1 Iron Bundle PAR 56
+1 Zapdos PGO 29
+1 Raichu V BRS 158
+1 Raikou V BRS 48
+1 Lumineon V BRS 40
+
+Trainer: 29
+4 Arven OBF 186
+3 Boss's Orders PAL 265
+1 Professor's Research PAF 87
+4 Electric Generator SVI 170
+4 Nest Ball PAF 84
+4 Ultra Ball PAF 91
+2 Switch Cart ASR 154
+1 Lost Vacuum CRZ 135
+1 Prime Catcher TEF 157
+1 Bravery Charm PAL 173
+1 Forest Seal Stone SIT 156
+1 Heavy Baton TEF 151
+1 Rescue Board TEF 159
+1 Town Store OBF 196
+
+Energy: 18
+16 Lightning Energy SVE 4
+2 Double Turbo Energy BRS 151

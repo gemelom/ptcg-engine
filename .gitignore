@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Logs
+*.log
+logs/
+battle_log/
+*.json
+*.jsonl
+recordings/
+
+# AI/ML
+experiments/
+models/
+runs/
+wandb/
+*.pt
+plans/
+
+# Frontend
+node_modules/
+*.zip
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Environment
+.env
+
+# Agent profiles
+.ptcg/
+
+# Build artifacts
+frontend/dist/

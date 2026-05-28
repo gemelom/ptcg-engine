@@ -1,0 +1,35 @@
+Pokémon: 20
+4 Charmander PAF 7
+1 Charmeleon PAF 8
+3 Charizard ex PAF 54
+2 Pidgey MEW 16
+2 Pidgeot ex OBF 164
+1 Bidoof CRZ 111
+1 Bibarel BRS 121
+1 Manaphy BRS 41
+1 Radiant Charizard CRZ 20
+1 Lumineon V BRS 40
+1 Rotom V CRZ 45
+1 Jirachi PAR 126
+1 Cleffa OBF 80
+
+Trainer: 32
+4 Arven OBF 186
+2 Iono PAF 80
+3 Boss's Orders PAL 265
+1 Professor Turo's Scenario PAR 257
+4 Rare Candy PAF 89
+4 Ultra Ball PAF 91
+1 Nest Ball PAF 84
+4 Buddy-Buddy Poffin TEF 144
+2 Counter Catcher PAR 160
+2 Super Rod PAL 188
+1 Prime Catcher TEF 157
+1 Lost Vacuum CRZ 135
+1 Defiance Band SVI 169
+1 Forest Seal Stone SIT 156
+1 Collapsed Stadium BRS 137
+
+Energy: 8
+1 Mist Energy TEF 161
+7 Basic {R} Energy SVE 2

@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ptcg-engine"
+version = "0.1.0"
+description = "Clean Pokémon TCG game engine for Python."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [
+    { name = "ptcg-engine contributors" },
+]
+keywords = ["pokemon", "tcg", "game-engine", "simulation", "reinforcement-learning"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "loguru>=0.7.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/gemelom/ptcg-engine"
+Repository = "https://github.com/gemelom/ptcg-engine"
+Issues = "https://github.com/gemelom/ptcg-engine/issues"
+
+[project.scripts]
+ptcg = "ptcg.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ptcg = ["decks/*.txt"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+ignore = ["F403", "F405", "F541"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
