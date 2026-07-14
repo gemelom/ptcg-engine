@@ -105,6 +105,25 @@ Run tests:
 uv run pytest
 ```
 
+Run tests with line coverage:
+
+```bash
+uv run pytest --cov=ptcg
+```
+
+Report card-specific rule coverage from pytest markers:
+
+```bash
+uv run python scripts/card_test_coverage.py --fail-on-unknown
+```
+
+Card tests can use `@pytest.mark.card(...)` and `@pytest.mark.card_coverage(...)`
+to record which implemented card IDs and behavior features they exercise. This report is
+separate from line coverage: it tracks rule-focused coverage for implemented cards.
+
+Preset deck smoke tests live in `tests/test_preset_decks.py` and load each bundled deck
+against itself for a short deterministic run.
+
 Run lint checks:
 
 ```bash
