@@ -1,4 +1,4 @@
-from ptcg.core.ability import Ability
+from ptcg.core.ability import ActiveAbility
 from ptcg.core.attack import Attack
 from ptcg.core.card import PokemonCard
 from ptcg.core.enums import *
@@ -13,11 +13,19 @@ class VIV029Charizard(PokemonCard):
         self.name = "Charizard"
         self.hp = 170
         self.pokemonType = PokemonType.NORMAL
+        self.pokemonRule = PokemonRule.NONE
         self.stage = Stage.STAGE_2
         self.cardType = CardType.FIRE
         self.retreat = [CardType.COLORLESS, CardType.COLORLESS, CardType.COLORLESS]
         self.weakness = [CardType.WATER]
-        self.evolvesFrom = "Charmeleon"
+        self.resistance = []
+        self.prize = 1
+
+        self.energy = []
+        self.attachment = []
+
+        self.evolveFrom = ["Charmeleon", "Charmander"]
+        self.evolved = []
 
         self.attacks = [
             Attack(
@@ -31,11 +39,11 @@ class VIV029Charizard(PokemonCard):
         ]
 
         self.ability = [
-            Ability(
+            ActiveAbility(
                 {
                     "name": "Battle Sense",
-                    "powerType": AbilityType.ACTIVE_ABILITY,
-                    "useWhenInPlay": True,
+                    "abilityType": AbilityType.ACTIVE_ABILITY,
+                    "onceUsedPerTurn": True,
                     "text": "Once during your turn, you may look at the top 3 cards of your "
                     "deck and put 1 of them into your hand. Discard the other cards.",
                 }

@@ -26,7 +26,8 @@ class OBF196TownStore(StadiumCard):
         self.cardType = CardType.NONE
         self.text = (
             "Once during each player's turn, that player may search their deck for a "
-            "Pokémon Tool card, reveal it, and put it into their hand. Then, that player shuffles their deck."
+            "Pokémon Tool card, reveal it, and put it into their hand. Then, that "
+            "player shuffles their deck."
         )
         self.playedFrom = None
 
@@ -69,7 +70,10 @@ class OBF196TownStore(StadiumCard):
 
         elif isinstance(action, UseStadiumAction):
             tools = [card for card in player.left if isinstance(card, ToolCard)]
-            tips = "You used Town Store. Choose 1 Pokémon Tool card from your deck to put into your hand."
+            tips = (
+                "You used Town Store. Choose 1 Pokémon Tool card from your deck to put "
+                "into your hand."
+            )
             actions = choose_card_actions(player.id, player.id, 1, 1, tools, tips=tips, source=self)
             chosen = yield from reduce_choose_card_actions(actions, state)
             if chosen:

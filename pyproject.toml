@@ -24,6 +24,7 @@ classifiers = [
 ]
 dependencies = [
     "loguru>=0.7.0",
+    "pytest-cov>=7.1.0",
 ]
 
 [project.urls]
@@ -43,6 +44,10 @@ ptcg = ["decks/*.txt"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+markers = [
+    "card(card_id): mark a test as direct coverage for an implemented card id",
+    "card_coverage(card_id, *features): mark card rule coverage features for reporting",
+]
 
 [tool.ruff]
 line-length = 100

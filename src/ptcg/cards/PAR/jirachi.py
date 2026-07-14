@@ -42,7 +42,8 @@ class PAR126Jirachi(PokemonCard):
                     "name": "Charge Energy",
                     "damage": 0,
                     "cost": [CardType.COLORLESS],
-                    "text": "Search your deck for up to 2 Basic Energy cards, reveal them, and put them into your hand. Then, shuffle your deck.",
+                    "text": "Search your deck for up to 2 Basic Energy cards, reveal them, "
+                    "and put them into your hand. Then, shuffle your deck.",
                 }
             )
         ]
@@ -82,7 +83,7 @@ class PAR126Jirachi(PokemonCard):
                 and source.stage == Stage.BASIC
                 and target in opponent_bench(state)
             ):
-                action.effect.damage = 0
+                action.effect.dc = 0
 
     def reduce_action(self, action, state):
         if isinstance(action, PlayPokemonAction):
@@ -96,7 +97,10 @@ class PAR126Jirachi(PokemonCard):
                 if card.superType == SuperType.ENERGY and card.energyType == EnergyType.BASIC
             ]
 
-            tips = "You used the attack Charge Energy. You can choose up to 2 Basic Energy cards, and put them into your hand."
+            tips = (
+                "You used the attack Charge Energy. You can choose up to 2 Basic "
+                "Energy cards, and put them into your hand."
+            )
             actions = choose_card_actions(player.id, player.id, 0, 2, cards, tips=tips, source=self)
 
             chosen_card = yield from reduce_choose_card_actions(actions, state)

@@ -50,8 +50,9 @@ class SFA092FezandipitiEX(PokemonCard):
                     "name": "Flip the Script",
                     "abilityType": AbilityType.ACTIVE_ABILITY,
                     "onceUsedPerTurn": True,
-                    "text": "Once during your turn, if any of your Pokémon were Knocked Out during your opponent's last turn, "
-                    "you may draw 3 cards. You can't use more than 1 Flip the Script Ability each turn.",
+                    "text": "Once during your turn, if any of your Pokémon were Knocked "
+                    "Out during your opponent's last turn, you may draw 3 cards. You "
+                    "can't use more than 1 Flip the Script Ability each turn.",
                 }
             )
         ]
@@ -71,7 +72,7 @@ class SFA092FezandipitiEX(PokemonCard):
         for ability in self.ability:
             if (
                 not self.abilityUsed
-                and not player.onceUsedTurn[ability.name]
+                and not player.onceUsedTurn.get(ability.name, False)
                 and player.hasPokemonDead
             ):
                 actions.extend([UseAbilityAction(state.turn, self, ability)])
@@ -86,9 +87,18 @@ class SFA092FezandipitiEX(PokemonCard):
             player = current_player(state)
             opponent = opponent_player(state)
 
-            tips = "You used the attack Cruel Arrow. You may choose 1 of your opponent's Pokemon and put 10 damage counter on it."
+            tips = (
+                "You used the attack Cruel Arrow. You may choose 1 of your opponent's "
+                "Pokemon and put 10 damage counter on it."
+            )
             actions = choose_card_actions(
-                player.id, opponent.id, 1, 1, opponent_all_pokemon(state), tips=tips
+                player.id,
+                opponent.id,
+                1,
+                1,
+                opponent_all_pokemon(state),
+                tips=tips,
+                source=self,
             )
             chosen_card = yield from reduce_choose_card_actions(actions, state)
             chosen_card = chosen_card[0]

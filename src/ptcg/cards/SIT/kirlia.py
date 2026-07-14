@@ -59,7 +59,8 @@ class SIT068Kirlia(PokemonCard):
                     "name": "Refinement",
                     "abilityType": AbilityType.ACTIVE_ABILITY,
                     "onceUsedPerTurn": True,
-                    "text": "Once during your turn, you may discard a card from your hand. If you do, draw 2 cards.",
+                    "text": "Once during your turn, you may discard a card from your hand. "
+                    "If you do, draw 2 cards.",
                 }
             )
         ]
@@ -78,7 +79,7 @@ class SIT068Kirlia(PokemonCard):
         if (
             not self.abilityUsed
             and not player.onceUsedTurn.get(self.ability[0].name, False)
-            and len(player.hand) > 1
+            and len(player.hand) > 0
         ):
             actions.append(UseAbilityAction(state.turn, self, self.ability[0]))
 

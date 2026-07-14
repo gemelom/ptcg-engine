@@ -24,7 +24,12 @@ class PAL171Artazon(StadiumCard):
         self.id = f"{self.set_name}-{self.number}"
         self.name = "Artazon"
         self.cardType = CardType.NONE
-        self.text = "Once during each player's turn, that player may search their deck for a Basic Pokémon that doesn't have a Rule Box and put it onto their Bench. Then, that player shuffles their deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"
+        self.text = (
+            "Once during each player's turn, that player may search their deck for a "
+            "Basic Pokémon that doesn't have a Rule Box and put it onto their Bench. "
+            "Then, that player shuffles their deck. (Pokémon ex, Pokémon V, etc. have "
+            "Rule Boxes.)"
+        )
         self.playedFrom = None
 
     def get_actions(self, state):
@@ -76,7 +81,10 @@ class PAL171Artazon(StadiumCard):
                 and card.stage == Stage.BASIC
                 and card.pokemonRule == PokemonRule.NONE
             ]
-            tips = "You used Artazon. You may choose 1 Basic Pokémon that doesn't have a Rule Box from your deck to put onto your Bench."
+            tips = (
+                "You used Artazon. You may choose 1 Basic Pokémon that doesn't have a "
+                "Rule Box from your deck to put onto your Bench."
+            )
             actions = choose_card_actions(
                 player.id, player.id, 1, 1, basic_pokemon, tips=tips, source=self
             )
@@ -93,7 +101,5 @@ class PAL171Artazon(StadiumCard):
 
         elif isinstance(action, DiscardStadiumAction):
             state.stadium.remove(self)
-            owner = (
-                player if self.playedFrom == player.id else opponent_player(state)
-            )
+            owner = player if self.playedFrom == player.id else opponent_player(state)
             discard_card(owner, self)

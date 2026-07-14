@@ -13,7 +13,10 @@ class PAR257ProfessorTurosScenario(SupporterCard):
         self.id = f"{self.set_name}-{self.number}"
         self.name = "Professor Turo's Scenario"
         self.cardType = CardType.NONE
-        self.text = "Put 1 of your Pokémon in play into your hand. (Discard all cards attached to that Pokémon.)"
+        self.text = (
+            "Put 1 of your Pokémon in play into your hand. "
+            "(Discard all cards attached to that Pokémon.)"
+        )
 
     def get_actions(self, state):
         player = current_player(state)
@@ -32,17 +35,24 @@ class PAR257ProfessorTurosScenario(SupporterCard):
                 self, (player.id, CardPosition.HAND), (player.id, CardPosition.DISCARD), state
             )
 
-            tips = "You used Professor Turo's Scenario. You should choose 1 of your Pokemon and put it into your hand. Then, discard all cards attached to that Pokemon."
+            tips = (
+                "You used Professor Turo's Scenario. You should choose 1 of your Pokemon "
+                "and put it into your hand. Then, discard all cards attached to that Pokemon."
+            )
             actions = choose_card_actions(
                 player.id, player.id, 1, 1, current_all_pokemon(state), tips=tips, source=self
             )
             chosen_card = yield from reduce_choose_card_actions(actions, state)
             chosen_card = chosen_card[0]
+            pokemon_to_return = chosen_card
 
             if chosen_card.position == PokemonPosition.ACTIVE:
                 player.active.remove(chosen_card)
                 # choose a new active
-                tips = "You used Professor Turo's Scenario and choose the active Pokemon. You should choose 1 of your benched Pokemon and switch it onto active spot."
+                tips = (
+                    "You used Professor Turo's Scenario and choose the active Pokemon. "
+                    "You should choose 1 of your benched Pokemon and switch it onto active spot."
+                )
                 actions = choose_card_actions(
                     player.id, player.id, 1, 1, current_bench(state), tips=tips, source=self
                 )
@@ -56,16 +66,16 @@ class PAR257ProfessorTurosScenario(SupporterCard):
                     card.index = idx + 1
 
             # pokemon to hand
-            item = type(chosen_card)()
+            item = type(pokemon_to_return)()
             item.cardPosition = CardPosition.HAND
             item.index = len(player.hand) + 1
             player.hand.append(item)
 
             # evolveFrom pokemon to hand
-            if chosen_card.stage != Stage.BASIC:
-                for pokemon in chosen_card.evolved:
+            if pokemon_to_return.stage != Stage.BASIC:
+                for pokemon in pokemon_to_return.evolved:
                     discard_card(player, pokemon)
 
-            for card in chosen_card.attachment:
+            for card in pokemon_to_return.attachment:
                 discard_card(player, card)
             player.supporterPlayedTurn = True

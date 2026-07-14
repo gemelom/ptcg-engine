@@ -43,15 +43,9 @@ class ASR154SwitchCart(ItemCard):
                 active_pokemon = player.active[0]
                 benched_pokemon = player.bench[0]
 
-                # Store max_hp if not already tracked
-                if not hasattr(benched_pokemon, "max_hp"):
-                    benched_pokemon.max_hp = benched_pokemon.hp
-
                 # Switch positions using switch_pokemon utility
                 switch_pokemon(active_pokemon, benched_pokemon, player)
 
                 # Heal 30 damage from the Pokémon moved to bench
-                benched_pokemon.hp = min(
-                    benched_pokemon.hp + 30,
-                    benched_pokemon.max_hp,
-                )
+                max_hp = getattr(active_pokemon, "max_hp", type(active_pokemon)().hp)
+                active_pokemon.hp = min(active_pokemon.hp + 30, max_hp)

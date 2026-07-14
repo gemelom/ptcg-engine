@@ -2,9 +2,9 @@ from ptcg.core.action import AttackAction, UseToolAction, choose_card_actions
 from ptcg.core.attack import Attack
 from ptcg.core.card import ToolCard
 from ptcg.core.enums import CardPosition, CardType, PokemonPosition, SuperType
-from ptcg.core.reducer import reduce_choose_card_actions, reduce_evolve_pokemon_action
-from ptcg.core.action import EvolvePokemonAction
+from ptcg.core.reducer import reduce_choose_card_actions
 from ptcg.utils.utils import (
+    auto_end_turn,
     can_attach_tool,
     current_all_pokemon,
     current_player,
@@ -24,7 +24,8 @@ class PAR178TechnicalMachineEvolution(ToolCard):
         self.text = (
             "The Pokémon this card is attached to can use the attack on this card. "
             "(Dangerous Evolution: Search your deck for a card that evolves from this Pokémon "
-            "and put it onto this Pokémon. This counts as evolving this Pokémon. Then, shuffle your deck.)"
+            "and put it onto this Pokémon. This counts as evolving this Pokémon. Then, "
+            "shuffle your deck.)"
         )
         self.hasAttached = False
         self.attachedTo = None
@@ -35,7 +36,9 @@ class PAR178TechnicalMachineEvolution(ToolCard):
                     "name": "Dangerous Evolution",
                     "damage": 0,
                     "cost": [],
-                    "text": "Search your deck for a card that evolves from this Pokémon and put it onto this Pokémon. (This counts as evolving this Pokémon.) Then, shuffle your deck.",
+                    "text": "Search your deck for a card that evolves from this Pokémon "
+                    "and put it onto this Pokémon. (This counts as evolving this Pokémon.) "
+                    "Then, shuffle your deck.",
                 }
             )
         ]
@@ -108,6 +111,26 @@ class PAR178TechnicalMachineEvolution(ToolCard):
 
                     if chosen:
                         evolution_card = chosen[0]
-                        evolve_action = EvolvePokemonAction(state.turn, pokemon, evolution_card)
-                        reduce_evolve_pokemon_action(evolve_action, state)
+                        self._evolve_from_deck(evolution_card, pokemon, player)
                         shuffle_cards(player.left)
+                        auto_end_turn(state)
+
+    def _evolve_from_deck(self, evolution_card, pokemon, player):
+        evolution_card.energy = pokemon.energy.copy()
+        evolution_card.attachment = pokemon.attachment.copy()
+        evolution_card.position = pokemon.position
+        evolution_card.cardPosition = pokemon.cardPosition
+        evolution_card.index = pokemon.index
+
+        pokemon.energy.clear()
+        pokemon.attachment.clear()
+        evolution_card.evolved.append(pokemon)
+
+        if pokemon.position == PokemonPosition.ACTIVE:
+            player.active[pokemon.index - 1] = evolution_card
+        elif pokemon.position == PokemonPosition.BENCH:
+            player.bench[pokemon.index - 1] = evolution_card
+
+        player.left.remove(evolution_card)
+        for idx, card in enumerate(player.left, start=1):
+            card.index = idx

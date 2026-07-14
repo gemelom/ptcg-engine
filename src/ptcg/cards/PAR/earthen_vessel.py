@@ -13,7 +13,11 @@ class PAR163EarthenVessel(ItemCard):
         self.id = f"{self.set_name}-{self.number}"
         self.name = "Earthen Vessel"
         self.cardType = CardType.NONE
-        self.text = "You can use this card only if you discard another card from your hand. Search your deck for up to 2 Basic Energy cards, reveal them, and put them into your hand. Then, shuffle your deck."
+        self.text = (
+            "You can use this card only if you discard another card from your hand. "
+            "Search your deck for up to 2 Basic Energy cards, reveal them, and put "
+            "them into your hand. Then, shuffle your deck."
+        )
 
     def get_actions(self, state):
         """Check if card can be used"""

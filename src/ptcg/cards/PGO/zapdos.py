@@ -12,13 +12,7 @@ from ptcg.core.enums import (
     Stage,
 )
 from ptcg.core.reducer import reduce_attack_action, reduce_play_pokemon_action
-from ptcg.utils.utils import (
-    check_energy,
-    current_active,
-    current_bench,
-    current_player,
-    opponent_active,
-)
+from ptcg.utils.utils import check_energy, opponent_active
 
 
 class PGO029Zapdos(PokemonCard):
@@ -67,7 +61,9 @@ class PGO029Zapdos(PokemonCard):
                     "abilityType": AbilityType.PASSIVE_ABILITY,
                     "abilityTrigger": AbilityTrigger.ATTACKING,
                     "onceUsedPerTurn": False,
-                    "text": "Your Basic {L} Pokémon's attacks, except any Zapdos, do 10 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+                    "text": "Your Basic {L} Pokémon's attacks, except any Zapdos, do 10 "
+                    "more damage to your opponent's Active Pokémon (before applying "
+                    "Weakness and Resistance).",
                 }
             )
         ]
@@ -95,17 +91,19 @@ class PGO029Zapdos(PokemonCard):
             self._apply_lightning_symbol(state)
             yield from reduce_attack_action(action, state)
 
+    def use_ability(self, action, state):
+        if not isinstance(action, AttackAction):
+            return
+
+        source = action.source
+        if (
+            source is not self
+            and getattr(source, "name", None) != self.name
+            and source.stage == Stage.BASIC
+            and source.cardType == CardType.LIGHTNING
+        ):
+            action.attack.damage += 10
+
     def _apply_lightning_symbol(self, state):
         """Lightning Symbol: Your Basic Lightning Pokémon's attacks do 10 more damage"""
-        current_player(state)
-
-        # Find all Basic Lightning Pokémon (except Zapdos) in play
-        for pokemon in current_active(state) + current_bench(state):
-            if (
-                pokemon != self
-                and pokemon.stage == Stage.BASIC
-                and pokemon.cardType == CardType.LIGHTNING
-            ):
-                # This ability modifies attack damage when they attack
-                # The actual damage modification would happen in their attack execution
-                pass
+        pass

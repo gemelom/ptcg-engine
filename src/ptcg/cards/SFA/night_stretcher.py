@@ -46,7 +46,10 @@ class SFA061NightStretcher(ItemCard):
             ]
 
             if candidates:
-                tips = "You used Night Stretcher. Choose 1 Pokémon or Basic Energy card from your discard pile to put into your hand."
+                tips = (
+                    "You used Night Stretcher. Choose 1 Pokémon or Basic Energy card "
+                    "from your discard pile to put into your hand."
+                )
                 actions = choose_card_actions(
                     player.id, player.id, 1, 1, candidates, tips=tips, source=self
                 )

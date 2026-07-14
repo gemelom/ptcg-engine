@@ -34,7 +34,10 @@ class PAL265BosssOrders(SupporterCard):
                 self, (player.id, CardPosition.HAND), (player.id, CardPosition.DISCARD), state
             )
 
-            tips = "You used Boss's Orders. You should choose 1 of your opponent's benched Pokemon and switch it with their active Pokemon."
+            tips = (
+                "You used Boss's Orders. You should choose 1 of your opponent's benched "
+                "Pokemon and switch it with their active Pokemon."
+            )
             actions = choose_card_actions(
                 player.id, opponent.id, 1, 1, opponent.bench, tips=tips, source=self
             )
