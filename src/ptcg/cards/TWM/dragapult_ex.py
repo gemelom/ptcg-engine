@@ -80,23 +80,28 @@ class TWM200DragapultEX(PokemonCard):
         return actions
 
     def use_ability(self, action, state):
-        if isinstance(action, AttackAction):
-            if self.position == PokemonPosition.BENCH and action.target == self:
-                action.attack.damage = 0
+        if (
+            isinstance(action, AttackAction)
+            and self.position == PokemonPosition.BENCH
+            and action.target == self
+        ):
+            action.attack.damage = 0
 
     def reduce_action(self, action, state):
         if isinstance(action, EvolvePokemonAction):
             reduce_evolve_pokemon_action(action, state)
 
         elif isinstance(action, AttackAction):
-            if action.attack == self.attacks[0]:
+            if action.attack_template == self.attacks[0]:
                 yield from reduce_attack_action(action, state)
 
-            elif action.attack == self.attacks[1]:
+            elif action.attack_template == self.attacks[1]:
                 player = current_player(state)
                 opponent = opponent_player(state)
 
-                yield from reduce_attack_action(action, state)
+                # Phantom Dive still has an effect to resolve after its damage.
+                # End the turn only after all 6 damage counters are placed.
+                yield from reduce_attack_action(action, state, auto_end_turn=False)
 
                 # reduce put dc effect
                 effect = Effect(1)

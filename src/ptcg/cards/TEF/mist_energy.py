@@ -1,5 +1,5 @@
 from ptcg.core.ability import PassiveAbility
-from ptcg.core.action import AttachEnergyAction, AttackAction
+from ptcg.core.action import AttachEnergyAction, EffectAction
 from ptcg.core.card import EnergyCard
 from ptcg.core.enums import *
 from ptcg.core.reducer import reduce_attach_energy_action
@@ -26,7 +26,7 @@ class TEF161MistEnergy(EnergyCard):
                 {
                     "name": "",
                     "abilityType": AbilityType.PASSIVE_ABILITY,
-                    "abilityTrigger": AbilityTrigger.ATTACKING,
+                    "abilityTrigger": AbilityTrigger.ATTACKED,
                     "text": self.text,
                 }
             )
@@ -42,10 +42,17 @@ class TEF161MistEnergy(EnergyCard):
         ]
 
     def use_ability(self, action, state):
-        if isinstance(action, AttackAction):
-            # TODO: Effect
-            if hasattr(action.attack, "effectAttack"):
-                action.attack.damage = 0
+        from ptcg.utils.utils import opponent_all_pokemon
+
+        if (
+            isinstance(action, EffectAction)
+            and action.target in opponent_all_pokemon(state)
+            and self in action.target.attachment
+        ):
+            # Damage is not an effect. EffectAction currently models damage
+            # counters and Special Conditions caused by attacks.
+            action.effect.dc = 0
+            action.effect.specialCondition = None
 
     def reduce_action(self, action, state):
         if isinstance(action, AttachEnergyAction):

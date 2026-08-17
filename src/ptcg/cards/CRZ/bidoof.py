@@ -73,9 +73,8 @@ class CRZ111Bidoof(PokemonCard):
         return actions
 
     def use_ability(self, action, state):
-        if isinstance(action, AttackAction):
-            if action.target == self:
-                action.attack.damage = 0
+        if isinstance(action, AttackAction) and action.target == self:
+            action.attack.damage = 0
 
     def reduce_action(self, action, state):
         if isinstance(action, PlayPokemonAction):
@@ -86,4 +85,4 @@ class CRZ111Bidoof(PokemonCard):
                 yield from reduce_attack_action(action, state)
 
         else:
-            raise ValueError(f"Invalid action: {action}")
+            raise TypeError(f"Invalid action: {action}")

@@ -8,6 +8,7 @@ from ptcg.core.enums import (
     AbilityType,
     CardPosition,
     CardType,
+    PlayerId,
     PokemonPosition,
 )
 from ptcg.core.envs import PokemonTCG
@@ -20,6 +21,8 @@ def _mock_state() -> State:
     state = State.__new__(State)
     state.player1 = MagicMock()
     state.player2 = MagicMock()
+    state.player1.id = PlayerId.PLAYER1
+    state.player2.id = PlayerId.PLAYER2
     state.turn = None
     state.timestep = 0
     state.turn_number = 0
@@ -31,6 +34,10 @@ def _mock_state() -> State:
     state.last_turn_opponent_actions = []
     state.turn_just_switched = False
     state.auto_events = []
+    state.invalid_action_policy = "raise"
+    state.expose_full_state = False
+    state.termination_reason = None
+    state.termination_loser = None
     return state
 
 
@@ -45,7 +52,7 @@ def test_auto_executed_key_present_on_reset():
 def test_auto_executed_empty_when_no_events():
     """auto_executed should be empty when no auto events occurred."""
     env = PokemonTCG(seed=42)
-    obs, _reward, done, info = env.reset()
+    _obs, _reward, done, info = env.reset()
 
     for _ in range(20):
         if done:
@@ -60,7 +67,7 @@ def test_auto_executed_empty_when_no_events():
                 break
         if action is None:
             action = actions[0]
-        obs, _reward, done, info = env.step(action)
+        _obs, _reward, done, info = env.step(action)
 
         if "auto_executed" in info:
             assert isinstance(info["auto_executed"], list)
@@ -106,17 +113,19 @@ def test_coin_flip_attack_records_event():
     def _find_bidoof_attack_action(info):
         """Find an AttackAction from a Bidoof card's Hyper Fang attack."""
         for action in info.get("raw_available_actions", []):
-            if isinstance(action, AttackAction):
-                card = action.source
-                if hasattr(card, "name") and card.name == "Bidoof":
-                    if card.position == PokemonPosition.ACTIVE:
-                        return action
+            if (
+                isinstance(action, AttackAction)
+                and hasattr(action.source, "name")
+                and action.source.name == "Bidoof"
+                and action.source.position == PokemonPosition.ACTIVE
+            ):
+                return action
         return None
 
     # Run multiple seeds to find a game where Bidoof is active and can attack
     for seed in range(100):
         env = PokemonTCG(seed=seed)
-        obs, _reward, done, info = env.reset()
+        _obs, _reward, done, info = env.reset()
 
         found = False
         for _ in range(200):
@@ -125,7 +134,7 @@ def test_coin_flip_attack_records_event():
 
             attack = _find_bidoof_attack_action(info)
             if attack is not None:
-                obs, _reward, done, info = env.step(attack)
+                _obs, _reward, done, info = env.step(attack)
                 auto = info.get("auto_executed", [])
                 if auto:
                     assert any("Coin flip:" in e for e in auto), (
@@ -142,7 +151,7 @@ def test_coin_flip_attack_records_event():
                     if isinstance(a, PassTurn):
                         action = a
                         break
-                obs, _reward, done, info = env.step(action)
+                _obs, _reward, done, info = env.step(action)
 
         if found:
             return
@@ -226,7 +235,7 @@ def test_weakness_event_in_game():
             deck1="charizard_ex",
             deck2="gholdengo_ex",
         )
-        obs, _reward, done, info = env.reset()
+        _obs, _reward, done, info = env.reset()
 
         for _ in range(300):
             if done:
@@ -242,7 +251,7 @@ def test_weakness_event_in_game():
                     return
 
             action = actions[0]
-            obs, _reward, done, info = env.step(action)
+            _obs, _reward, done, info = env.step(action)
 
 
 def test_resistance_event_in_game():
@@ -256,7 +265,7 @@ def test_resistance_event_in_game():
             deck1="gholdengo_ex",
             deck2="charizard_ex",
         )
-        obs, _reward, done, info = env.reset()
+        _obs, _reward, done, info = env.reset()
 
         for _ in range(300):
             if done:
@@ -272,7 +281,7 @@ def test_resistance_event_in_game():
                     return
 
             action = actions[0]
-            obs, _reward, done, info = env.step(action)
+            _obs, _reward, done, info = env.step(action)
 
 
 # =============================================================================
@@ -298,8 +307,7 @@ def test_passive_ability_trigger_records_event():
             "text": "Prevent all damage done to Benched Pokémon.",
         }
     )
-    # card.ability is a single PassiveAbility instance (not a list)
-    # to match what _has_passive_ability checks
+    # A single ability remains supported for backward compatibility.
     card.ability = ability
     card.name = "Manaphy"
 
@@ -333,7 +341,7 @@ def test_no_ability_no_event():
 def test_ability_trigger_in_game():
     """Integration test: passive ability trigger event appears in auto_executed."""
     env = PokemonTCG(seed=42)
-    obs, _reward, done, info = env.reset()
+    _obs, _reward, done, info = env.reset()
 
     for _ in range(300):
         if done:
@@ -349,7 +357,7 @@ def test_ability_trigger_in_game():
                 return
 
         action = actions[0]
-        obs, _reward, done, info = env.step(action)
+        _obs, _reward, done, info = env.step(action)
 
 
 # =============================================================================
@@ -361,7 +369,7 @@ def test_knockout_and_prize_events_in_game():
     """Integration test: knockout and prize card events appear in auto_executed."""
     for seed in range(20):
         env = PokemonTCG(seed=seed)
-        obs, _reward, done, info = env.reset()
+        _obs, _reward, done, info = env.reset()
 
         found_knockout = False
         found_prize = False
@@ -384,7 +392,7 @@ def test_knockout_and_prize_events_in_game():
                 break
 
             action = actions[0]
-            obs, _reward, done, info = env.step(action)
+            _obs, _reward, done, info = env.step(action)
 
         if found_knockout and found_prize:
             return
@@ -395,7 +403,7 @@ def test_knockout_and_prize_events_in_game():
 def test_auto_draw_event_on_turn_switch():
     """Integration test: auto-draw event appears when turn switches."""
     env = PokemonTCG(seed=42)
-    obs, _reward, done, info = env.reset()
+    _obs, _reward, done, info = env.reset()
 
     found_draw = False
 
@@ -415,7 +423,7 @@ def test_auto_draw_event_on_turn_switch():
             break
 
         action = actions[0]
-        obs, _reward, done, info = env.step(action)
+        _obs, _reward, done, info = env.step(action)
 
     assert found_draw, "Expected a turn switch + auto-draw event"
 
@@ -428,7 +436,7 @@ def test_incremental_events_in_multi_step():
     in a subsequent yield (not cumulative).
     """
     env = PokemonTCG(seed=42)
-    obs, _reward, done, info = env.reset()
+    _obs, _reward, done, info = env.reset()
 
     # Collect all auto_executed batches across the game
     batches = []
@@ -445,7 +453,7 @@ def test_incremental_events_in_multi_step():
             batches.append(list(auto))
 
         action = actions[0]
-        obs, _reward, done, info = env.step(action)
+        _obs, _reward, done, info = env.step(action)
 
     # Verify no batch contains duplicate events (each is incremental)
     for i, batch in enumerate(batches):
@@ -467,11 +475,10 @@ def test_knockout_event_format():
     target.attachment = []
     target.evolved = []
 
-    attacker = MagicMock()
+    attacker = state.player1
     attacker.prize = [MagicMock()]
-    attacker.id = MagicMock()
 
-    opponent = MagicMock()
+    opponent = state.player2
     opponent.bench = [target]
     opponent.active = []
     opponent.discard = []
@@ -484,15 +491,10 @@ def test_knockout_event_format():
     # _handle_knockout is a generator that yields for card selection
     gen = _handle_knockout(target, attacker, opponent, state)
 
-    # It will try to yield for card selection - exhaust to get events
-    try:
-        gen.send(None)
-    except StopIteration:
-        pass
-    except Exception:
-        pass
+    # It yields for prize selection after recording the knockout event.
+    _obs, _reward, _done, info = next(gen)
 
     # Check that knockout event was recorded
-    knockout_events = [e for e in state.auto_events if "was knocked out." in e]
+    knockout_events = [e for e in info["auto_executed"] if "was knocked out." in e]
     assert len(knockout_events) >= 1
     assert "Charizard ex was knocked out." in knockout_events[0]

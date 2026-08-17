@@ -44,6 +44,36 @@ def test_zapdos_lightning_symbol_does_not_add_damage_to_zapdos_attack():
     assert action.attack.damage == 110
 
 
+def test_zapdos_lightning_symbol_triggers_during_another_pokemons_attack():
+    zapdos = make_card("PGO-029")
+    attacker = make_card("BRS-048")
+    attacker.energy = [CardType.LIGHTNING, CardType.COLORLESS]
+    defender = make_card("PAF-054")
+    state = make_state(
+        PlayerZones(
+            left=[make_card("SVE-002")],
+            prize=[make_card("SVE-004")],
+            active=[attacker],
+            bench=[zapdos],
+        ),
+        PlayerZones(
+            left=[make_card("SVE-005")],
+            prize=[make_card("SVE-007")],
+            active=[defender],
+        ),
+    )
+    state.player1.onceUsedTurn["Fleet-Footed"] = False
+
+    attacks = [action for action in attacker.get_actions(state) if isinstance(action, AttackAction)]
+    assert len(attacks) == 1
+
+    list(attacker.reduce_action(attacks[0], state))
+
+    # Lightning Rondo is 40 with one Benched Pokemon, then Lightning Symbol adds 10.
+    assert defender.hp == 280
+    assert "Passive ability triggered: Zapdos's Lightning Symbol." in state.auto_events
+
+
 def test_zapdos_electric_ball_damages_opponents_active_pokemon():
     zapdos = make_card("PGO-029")
     zapdos.energy = [CardType.LIGHTNING, CardType.LIGHTNING, CardType.COLORLESS]

@@ -23,12 +23,8 @@ class TEF155MortysConviction(SupporterCard):
         actions = []
 
         # Can use if no supporter played this turn
-        if not player.supporterPlayedTurn:
-            # Can use if have at least 2 cards in hand (self + 1 to discard)
-            if len(player.hand) >= 2:
-                # Can use only if opponent has benched Pokémon
-                if len(opponent.bench) >= 1:
-                    actions.append(UseSupporterAction(state.turn, self))
+        if not player.supporterPlayedTurn and len(player.hand) >= 2 and len(opponent.bench) >= 1:
+            actions.append(UseSupporterAction(state.turn, self))
 
         return actions
 

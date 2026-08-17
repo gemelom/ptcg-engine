@@ -65,7 +65,7 @@ class PAF007Charmander(PokemonCard):
             reduce_play_pokemon_action(action, state)
 
         elif isinstance(action, AttackAction):
-            if action.attack == self.attacks[0]:
+            if action.attack_template == self.attacks[0]:
                 if len(state.stadium) > 0:
                     old_stadium = state.stadium[0]
                     old_stadium.reduce_action(
@@ -73,5 +73,5 @@ class PAF007Charmander(PokemonCard):
                     )
                 auto_end_turn(state)
 
-            elif action.attack == self.attacks[1]:
+            elif action.attack_template == self.attacks[1]:
                 yield from reduce_attack_action(action, state)

@@ -3,7 +3,11 @@ from ptcg.core.action import AttackAction, EvolvePokemonAction, UseAbilityAction
 from ptcg.core.attack import Attack
 from ptcg.core.card import PokemonCard
 from ptcg.core.enums import *
-from ptcg.core.reducer import _force_active_replacement, reduce_attack_action, reduce_evolve_pokemon_action
+from ptcg.core.reducer import (
+    _force_active_replacement,
+    reduce_attack_action,
+    reduce_evolve_pokemon_action,
+)
 from ptcg.utils.utils import (
     check_energy,
     current_player,
@@ -137,7 +141,7 @@ class TEF129Dudunsparce(PokemonCard):
         self.energy = []
         self.attachment = []
 
-        shuffle_cards(player.left)
+        shuffle_cards(player.left, state)
 
         # If was active, force player to choose a bench replacement
         if was_active and bench_has_pokemon:

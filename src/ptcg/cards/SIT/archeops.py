@@ -167,7 +167,7 @@ class SIT147Archeops(PokemonCard):
                         )
                     player.reward.apply_energy_attached_reward(1)
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
             self.abilityUsed = True
             player.onceUsedTurn[action.ability.name] = True
 

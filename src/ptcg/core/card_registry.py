@@ -1,7 +1,7 @@
 import importlib
 import inspect
 from pathlib import Path
-from typing import Dict, List, Optional, Type
+from typing import Optional
 
 from ptcg.core.card import Card
 
@@ -10,7 +10,7 @@ CARDS_DIR = Path(__file__).parent.parent / "cards"
 
 class CardRegistry:
     _instance: Optional["CardRegistry"] = None
-    _cards: Dict[str, Type[Card]]
+    _cards: dict[str, type[Card]]
     _loaded: bool
 
     def __new__(cls):
@@ -34,7 +34,7 @@ class CardRegistry:
 
             try:
                 module = importlib.import_module(module_name)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - isolate one broken card module
                 print(f"Warning: Could not import {module_name}: {e}")
                 continue
 
@@ -49,18 +49,18 @@ class CardRegistry:
                     card_id = instance.id
                     if card_id:
                         self._cards[card_id] = obj
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - isolate one broken card class
                     print(f"Warning: Could not instantiate {obj.__name__}: {e}")
 
-    def get(self, card_id: str) -> Optional[Type[Card]]:
+    def get(self, card_id: str) -> type[Card] | None:
         self._ensure_loaded()
         return self._cards.get(card_id)
 
-    def get_by_set_and_number(self, set_name: str, number: str) -> Optional[Type[Card]]:
+    def get_by_set_and_number(self, set_name: str, number: str) -> type[Card] | None:
         self._ensure_loaded()
         return self._cards.get(f"{set_name}-{number}")
 
-    def list_all(self) -> List[str]:
+    def list_all(self) -> list[str]:
         self._ensure_loaded()
         return list(self._cards.keys())
 
@@ -68,8 +68,8 @@ class CardRegistry:
 registry = CardRegistry()
 
 
-def _build_card_list() -> Dict[str, Optional[Type[Card]]]:
-    card_list: Dict[str, Optional[Type[Card]]] = {"NONE": None}
+def _build_card_list() -> dict[str, type[Card] | None]:
+    card_list: dict[str, type[Card] | None] = {"NONE": None}
     for card_id, card_class in registry._cards.items():
         card_list[card_id] = card_class
     return card_list
@@ -77,19 +77,19 @@ def _build_card_list() -> Dict[str, Optional[Type[Card]]]:
 
 class _CardListProxy:
     def __init__(self):
-        self._cached: Optional[Dict[str, Optional[Type[Card]]]] = None
+        self._cached: dict[str, type[Card] | None] | None = None
 
-    def __getitem__(self, key: str) -> Optional[Type[Card]]:
+    def __getitem__(self, key: str) -> type[Card] | None:
         if self._cached is None:
             registry._ensure_loaded()
             self._cached = _build_card_list()
         return self._cached[key]
 
-    def get(self, key: str, default: Optional[Type[Card]] = None) -> Optional[Type[Card]]:
+    def get(self, key: str, default: type[Card] | None = None) -> type[Card] | None:
         if self._cached is None:
             registry._ensure_loaded()
             self._cached = _build_card_list()
         return self._cached.get(key, default)
 
 
-CardList: Dict[str, Optional[Type[Card]]] = _CardListProxy()  # type: ignore
+CardList: dict[str, type[Card] | None] = _CardListProxy()  # type: ignore

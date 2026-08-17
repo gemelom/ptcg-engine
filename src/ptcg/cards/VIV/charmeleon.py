@@ -60,7 +60,9 @@ class VIV028Charmeleon(PokemonCard):
 
         elif isinstance(action, AttackAction):
             yield from reduce_attack_action(action, state)
-            if action.attack == self.attacks[1]:  # Raging Flames: discard top 3 cards of deck
+            if (
+                action.attack_template == self.attacks[1]
+            ):  # Raging Flames: discard top 3 cards of deck
                 top_cards = player.left[:3]
                 if top_cards:
                     move_cards(

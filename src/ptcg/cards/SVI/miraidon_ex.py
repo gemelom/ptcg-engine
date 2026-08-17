@@ -155,7 +155,7 @@ class SVI253MiraidonEX(PokemonCard):
                     pokemon.position = PokemonPosition.BENCH
 
             # Shuffle deck
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
 
             # Mark ability as used
             self.abilityUsed = True
@@ -168,4 +168,3 @@ class SVI253MiraidonEX(PokemonCard):
         if self.attackDisabledTurns > 0:
             self.attackDisabledTurns -= 1
         # 注意：useAttackLastTurn在next_turn函数中被重置
-        pass

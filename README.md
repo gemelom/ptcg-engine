@@ -73,6 +73,12 @@ The environment follows a Gym-like shape:
 - `reset()` returns `(obs, reward, done, info)`.
 - `step(action)` advances the game and returns `(obs, reward, done, info)`.
 - `info["raw_available_actions"]` contains the valid engine action objects.
+- `obs` is a detached, player-relative dictionary: the opponent's hand and all
+  deck/Prize identities are hidden.
+
+For engine debugging only, `PokemonTCG(expose_full_state=True)` adds the mutable
+`State` object to `info["full_state"]`. Do not enable this for agents that must
+respect hidden information.
 
 ## Decks
 
@@ -93,10 +99,10 @@ uv run ptcg --deck1 ./my_deck.txt --deck2 charizard_ex
 
 ## Development
 
-Install dependencies:
+Install runtime and development dependencies from the lock file:
 
 ```bash
-uv sync
+uv sync --frozen --all-groups
 ```
 
 Run tests:
@@ -128,6 +134,14 @@ Run lint checks:
 
 ```bash
 uv run ruff check .
+uv run ruff format --check .
+uv run mypy
+```
+
+Audit installed dependencies:
+
+```bash
+uv run pip-audit
 ```
 
 Build distributions:
@@ -135,6 +149,10 @@ Build distributions:
 ```bash
 uv build
 ```
+
+Pull requests run all of these checks in CI, with a 90% minimum line-coverage
+threshold. See [CONTRIBUTING.md](CONTRIBUTING.md) for the maintenance workflow,
+engine invariants, and the checklist for adding or changing cards.
 
 ## Project Boundaries
 

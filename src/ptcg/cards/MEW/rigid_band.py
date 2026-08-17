@@ -42,11 +42,12 @@ class MEW165RigidBand(ToolCard):
         ]
 
     def use_ability(self, action, state):
-        if isinstance(action, AttackAction):
-            if self.attachedTo and len(self.attachedTo) > 0:
-                pokemon = self.attachedTo[0]
-                if pokemon.stage == Stage.STAGE_1:
-                    action.attack.damage = max(0, action.attack.damage - 30)
+        if (
+            isinstance(action, AttackAction)
+            and self.attachedTo
+            and self.attachedTo[0].stage == Stage.STAGE_1
+        ):
+            action.attack.damage = max(0, action.attack.damage - 30)
 
     def reduce_action(self, action, state):
         if isinstance(action, UseToolAction):

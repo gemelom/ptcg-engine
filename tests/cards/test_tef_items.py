@@ -17,9 +17,9 @@ from tests.helpers.state_builder import PlayerZones, make_state
 )
 def test_buddy_buddy_poffin_puts_two_small_basics_on_bench():
     card = make_card("TEF-144")
-    small1 = make_card("TEF-128")   # Dunsparce - 60 HP Basic
-    small2 = make_card("BRS-124")   # Minccino - Basic <=70 HP
-    big = make_card("PAF-054")      # Charizard ex - too big
+    small1 = make_card("TEF-128")  # Dunsparce - 60 HP Basic
+    small2 = make_card("BRS-124")  # Minccino - Basic <=70 HP
+    big = make_card("PAF-054")  # Charizard ex - too big
     state = make_state(PlayerZones(hand=[card], left=[small1, small2, big]))
 
     actions = card.get_actions(state)
@@ -61,9 +61,7 @@ def test_master_ball_discards_hand_card_and_searches_pokemon():
     discard_cost = make_card("SVE-002")
     target_pokemon = make_card("PAF-007")
     other_deck = make_card("PAF-084")
-    state = make_state(
-        PlayerZones(hand=[card, discard_cost], left=[target_pokemon, other_deck])
-    )
+    state = make_state(PlayerZones(hand=[card, discard_cost], left=[target_pokemon, other_deck]))
 
     actions = card.get_actions(state)
     assert len(actions) == 1

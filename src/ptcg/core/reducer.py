@@ -12,7 +12,8 @@ Generator Pattern:
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Any, Generator, List, Tuple, cast
+from collections.abc import Generator, Sequence
+from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 
@@ -28,7 +29,12 @@ from ptcg.core.action import (
     choose_card_actions,
 )
 from ptcg.core.enums import CardPosition, PlayerId, PokemonPosition, SuperType
-from ptcg.core.exceptions import CardPlayError, GameTermination, InvalidCardPositionError
+from ptcg.core.exceptions import (
+    CardPlayError,
+    GameTermination,
+    InvalidActionError,
+    InvalidCardPositionError,
+)
 from ptcg.utils.utils import (
     current_active,
     current_player,
@@ -61,7 +67,7 @@ DAMAGE_COUNTER_MULTIPLIER = 10
 # =============================================================================
 
 # Generator that yields (obs, reward, done, info) and receives ChooseCardAction
-StepGenerator = Generator[Tuple["State", float, bool, dict], ChooseCardAction, None]
+StepGenerator = Generator[tuple[dict[str, Any], float, bool, dict], ChooseCardAction, None]
 
 
 # =============================================================================
@@ -70,7 +76,7 @@ StepGenerator = Generator[Tuple["State", float, bool, dict], ChooseCardAction, N
 
 
 def _calculate_damage(
-    source: "PokemonCard", target: "PokemonCard", base_damage: int, state: "State"
+    source: PokemonCard, target: PokemonCard, base_damage: int, state: State
 ) -> int:
     """Calculate damage after applying weakness and resistance.
 
@@ -98,9 +104,9 @@ def _calculate_damage(
 
 
 def _force_active_replacement(
-    opponent: "Player",
-    state: "State",
-    original_turn: "PlayerId",
+    opponent: Player,
+    state: State,
+    original_turn: PlayerId,
 ) -> StepGenerator:
     """Force opponent to choose a new active Pokemon from bench.
 
@@ -124,18 +130,18 @@ def _force_active_replacement(
     tips = "Your active Pokemon is knocked out. You have to choose 1 of your benched Pokemon and switch it to your active spot."
     # source param accepts Player for "who is choosing" context
     actions = choose_card_actions(opponent.id, opponent.id, 1, 1, opponent.bench, tips=tips)
-    chosen_card = yield from reduce_choose_card_actions(actions, state)
-    chosen_card = chosen_card[0]
-    move_pokemon(opponent, chosen_card)
+    chosen_cards = yield from reduce_choose_card_actions(actions, state)
+    chosen_pokemon = cast("PokemonCard", chosen_cards[0])
+    move_pokemon(opponent, chosen_pokemon)
 
     state.turn = original_turn
 
 
 def _handle_knockout(
-    target: "PokemonCard",
-    attacker: "Player",
-    opponent: "Player",
-    state: "State",
+    target: PokemonCard,
+    attacker: Player,
+    opponent: Player,
+    state: State,
 ) -> StepGenerator:
     """Handle Pokemon knockout: discard, prize selection, and replacement.
 
@@ -214,8 +220,8 @@ def _handle_knockout(
 
 
 def reduce_attack_action(
-    action: "AttackAction",
-    state: "State",
+    action: AttackAction,
+    state: State,
     auto_end_turn: bool = True,
 ) -> StepGenerator:
     """Reduce an attack action.
@@ -231,6 +237,24 @@ def reduce_attack_action(
     Yields:
         (obs, reward, done, info) for any card selections needed.
     """
+    yield from reduce_attack_damage(action, state)
+
+    if auto_end_turn:
+        next_turn(state)
+
+
+def reduce_attack_damage(
+    action: AttackAction,
+    state: State,
+    *,
+    apply_weakness_resistance: bool = True,
+) -> StepGenerator:
+    """Apply one attack's damage to one target without ending the turn.
+
+    Spread attacks can call this once per selected Pokémon and decide whether
+    Weakness and Resistance apply based on the target's original position.
+    Knockout, prize, and replacement handling stays shared with normal attacks.
+    """
     trigger_attack_abilities(action, state)
     player = current_player(state)
     opponent = opponent_player(state)
@@ -239,7 +263,11 @@ def reduce_attack_action(
     source = cast("PokemonCard", action.source)
     target = cast("PokemonCard", action.target)
 
-    damage = _calculate_damage(source, target, action.attack.damage, state)
+    damage = (
+        _calculate_damage(source, target, action.attack.damage, state)
+        if apply_weakness_resistance
+        else action.attack.damage
+    )
     player.reward.apply_damage_dealt_reward(damage)
 
     if target.hp > damage:
@@ -247,13 +275,31 @@ def reduce_attack_action(
     else:
         yield from _handle_knockout(target, player, opponent, state)
 
-    if auto_end_turn:
-        next_turn(state)
+
+def reduce_recoil_damage(source: PokemonCard, damage: int, state: State) -> StepGenerator:
+    """Apply attack recoil to the attacking Pokémon without Weakness or Resistance.
+
+    If recoil causes a knockout, the opponent takes prizes and the attacking
+    player replaces an Active Pokémon before the turn ends.
+    """
+    player = current_player(state)
+    opponent = opponent_player(state)
+
+    if source.hp > damage:
+        source.hp -= damage
+        return
+
+    attacking_turn = player.id
+    state.turn = opponent.id
+    try:
+        yield from _handle_knockout(source, opponent, player, state)
+    finally:
+        state.turn = attacking_turn
 
 
 def reduce_effect_action(
     action: EffectAction,
-    state: "State",
+    state: State,
 ) -> StepGenerator:
     """Reduce an effect action (e.g., damage counters from abilities).
 
@@ -282,7 +328,7 @@ def reduce_effect_action(
         yield from _handle_knockout(target, player, opponent, state)
 
 
-def reduce_use_ability_action(action, state: "State") -> None:
+def reduce_use_ability_action(action, state: State) -> None:
     """Reduce an ability usage action.
 
     Args:
@@ -295,7 +341,7 @@ def reduce_use_ability_action(action, state: "State") -> None:
     raise NotImplementedError("Ability action reduction not yet implemented")
 
 
-def reduce_use_stadium_action(action, state: "State") -> None:
+def reduce_use_stadium_action(action, state: State) -> None:
     """Reduce a stadium usage action.
 
     Args:
@@ -310,7 +356,7 @@ def reduce_use_stadium_action(action, state: "State") -> None:
 
 def reduce_retreat_action(
     action: RetreatAction,
-    state: "State",
+    state: State,
 ) -> StepGenerator:
     """Reduce a retreat action.
 
@@ -332,8 +378,8 @@ def reduce_retreat_action(
 
     tips = "You retreated your active Pokemon. You should choose 1 of your benched Pokemon and switch it to your active spot."
     actions = choose_card_actions(player.id, player.id, 1, 1, player.bench, tips=tips)
-    target = yield from reduce_choose_card_actions(actions, state)
-    target = target[0]
+    chosen_targets = yield from reduce_choose_card_actions(actions, state)
+    target = cast("PokemonCard", chosen_targets[0])
 
     trigger_retreat_abilities(action, state)
 
@@ -345,20 +391,20 @@ def reduce_retreat_action(
             card for card in current_active_pokemon.attachment if card.superType == SuperType.ENERGY
         ]
         # Cast to EnergyCard list for retreat_combinations (we filtered by ENERGY superType)
-        energy_cards_as_energy = cast(List["EnergyCard"], energy_cards)
+        energy_cards_as_energy = cast(list["EnergyCard"], energy_cards)
         available_actions = [
             ChooseCardAction(
                 player.id,
                 player.id,
-                cast(List["Card"], combo),  # EnergyCard is subclass of Card
+                cast(list["Card"], combo),  # EnergyCard is subclass of Card
                 energy_cards,
             )
             for combo in retreat_combinations(energy_cards_as_energy, retreat_cnt)
         ]
         tips = "You retreated your active Pokemon. You should discard some energies attached to it."
         prompt = ChooseCardPrompt(0, len(energy_cards), energy_cards, tips=tips)
-        actions = (available_actions, prompt)
-        chosen_card = yield from reduce_choose_card_actions(actions, state)
+        retreat_actions = (available_actions, prompt)
+        chosen_card = yield from reduce_choose_card_actions(retreat_actions, state)
 
         for card in chosen_card:
             for energy_provide in cast(Any, card).provides:
@@ -376,7 +422,7 @@ def reduce_retreat_action(
 
 def reduce_play_pokemon_action(
     action: PlayPokemonAction,
-    state: "State",
+    state: State,
 ) -> None:
     """Reduce a play Pokemon action.
 
@@ -422,7 +468,7 @@ def reduce_play_pokemon_action(
 
 def reduce_evolve_pokemon_action(
     action: EvolvePokemonAction,
-    state: "State",
+    state: State,
 ) -> None:
     """Reduce an evolve Pokemon action.
 
@@ -460,7 +506,7 @@ def reduce_evolve_pokemon_action(
 
 def reduce_attach_energy_action(
     action: AttachEnergyAction,
-    state: "State",
+    state: State,
 ) -> None:
     """Reduce an attach energy action.
 
@@ -498,9 +544,9 @@ def reduce_attach_energy_action(
 
 
 def reduce_choose_card_actions(
-    actions: Tuple[List[ChooseCardAction], ChooseCardPrompt],
-    state: "State",
-) -> Generator[Tuple["State", float, bool, dict], ChooseCardAction, List["Card"]]:
+    actions: tuple[Sequence[ChooseCardAction], ChooseCardPrompt],
+    state: State,
+) -> Generator[tuple[dict[str, Any], float, bool, dict], ChooseCardAction, list[Card]]:
     """Reduce a card selection prompt.
 
     This generator pauses execution to let the player choose cards,
@@ -516,8 +562,8 @@ def reduce_choose_card_actions(
     Returns:
         List of chosen cards.
 
-    Note:
-        If player provides invalid action, a random valid one is chosen.
+    Invalid choices raise ``InvalidActionError`` by default. Environments can
+    explicitly opt into random replacement through ``invalid_action_policy``.
     """
     available_actions, prompt = actions
 
@@ -532,25 +578,35 @@ def reduce_choose_card_actions(
     state.is_choosing_card = True
     state.choose_card_list = prompt.candidates
 
-    obs = state.get_obs()
+    obs = state.get_obs(player.id)
     done = False
-    reward = player.reward.calculate_step_reward()
+    reward = cast(float, player.reward.calculate_step_reward())
     info = {
         "is_choosing_card": state.is_choosing_card,
         "raw_available_actions": available_actions,
         "prompt": prompt,
         "turn": state.turn,
-        "full_state": state,
         "auto_executed": list(state.auto_events),
     }
+    if state.expose_full_state:
+        info["full_state"] = state
     state.auto_events = []
 
     choose_card_action = yield (obs, reward, done, info)
 
-    # Validate action - fall back to random if invalid
+    # Validate the exact action object offered to the caller. This prevents a
+    # stale or malformed choice from silently changing game state.
     if choose_card_action not in available_actions:
         logger.debug(f"{state.turn} invalid choose card action: {choose_card_action}")
-        choose_card_action = random.choice(available_actions)
+        if state.invalid_action_policy == "random":
+            rng = state.rng or random.Random()
+            choose_card_action = rng.choice(available_actions)
+        else:
+            raise InvalidActionError(
+                f"Action {choose_card_action!r} is not available for card selection; "
+                f"choose one of the {len(available_actions)} actions in "
+                "info['raw_available_actions']"
+            )
 
     chosen_card = choose_card_action.chosen
     state.actions_buffer.append(choose_card_action)

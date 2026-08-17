@@ -121,16 +121,16 @@ class SIT139LugiaVSTAR(PokemonCard):
                     )
 
         # VSTAR ability action (when in play and VSTAR not yet used)
-        if self.position in [PokemonPosition.ACTIVE, PokemonPosition.BENCH]:
-            # Check if VSTAR power hasn't been used this game
-            if player.onceUsedGame.get(CardTag.VSTAR) is False:
-                # Check if there are valid targets in discard
-                valid_discard = [
-                    card for card in player.discard if self._is_valid_colorless_pokemon(card)
-                ]
-                if len(valid_discard) > 0 and len(player.bench) < 5:
-                    for ability in self.ability:
-                        actions.append(UseAbilityAction(player.id, self, ability))
+        if (
+            self.position in [PokemonPosition.ACTIVE, PokemonPosition.BENCH]
+            and player.onceUsedGame.get(CardTag.VSTAR) is False
+        ):
+            valid_discard = [
+                card for card in player.discard if self._is_valid_colorless_pokemon(card)
+            ]
+            if valid_discard and len(player.bench) < 5:
+                for ability in self.ability:
+                    actions.append(UseAbilityAction(player.id, self, ability))
 
         return actions
 
@@ -149,9 +149,7 @@ class SIT139LugiaVSTAR(PokemonCard):
         if card.cardType != CardType.COLORLESS:
             return False
         # Can only put Basic or Stage 1 Pokémon on bench
-        if card.stage not in [Stage.BASIC, Stage.STAGE_1]:
-            return False
-        return True
+        return card.stage in [Stage.BASIC, Stage.STAGE_1]
 
     def reduce_action(self, action, state):
         """
@@ -171,7 +169,7 @@ class SIT139LugiaVSTAR(PokemonCard):
             reduce_evolve_pokemon_action(action, state)
 
         elif isinstance(action, AttackAction):
-            if action.attack == self.attacks[0]:
+            if action.attack_template == self.attacks[0]:
                 # Tempest Dive - standard attack
                 yield from reduce_attack_action(action, state)
             else:
@@ -184,7 +182,7 @@ class SIT139LugiaVSTAR(PokemonCard):
             yield from reduce_retreat_action(action, state)
 
         else:
-            raise ValueError(f"Invalid action: {action}")
+            raise TypeError(f"Invalid action: {action}")
 
     def _use_summoning_star(self, action, state):
         """

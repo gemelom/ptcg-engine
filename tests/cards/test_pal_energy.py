@@ -8,7 +8,9 @@ from tests.helpers.state_builder import PlayerZones, make_state
 
 
 @pytest.mark.card("PAL-193")
-@pytest.mark.card_coverage("PAL-193", "get_actions", "reduce_action", "negative_case", "zone_change")
+@pytest.mark.card_coverage(
+    "PAL-193", "get_actions", "reduce_action", "negative_case", "zone_change"
+)
 def test_therapeutic_energy_attaches_and_cures_relevant_special_condition():
     therapeutic_energy = make_card("PAL-193")
     charmander = make_card("PAF-007")

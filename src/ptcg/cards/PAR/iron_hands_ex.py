@@ -97,10 +97,10 @@ class PAR248IronHandsEX(PokemonCard):
             reduce_play_pokemon_action(action, state)
 
         elif isinstance(action, AttackAction):
-            if action.attack == self.attacks[0]:
+            if action.attack_template == self.attacks[0]:
                 # Arm Press - normal attack
                 yield from reduce_attack_action(action, state)
-            elif action.attack == self.attacks[1]:
+            elif action.attack_template == self.attacks[1]:
                 # Amp You Very Much - attack with extra prize card effect
                 yield from self._amp_you_very_much_attack(action, state)
             else:
@@ -118,7 +118,7 @@ class PAR248IronHandsEX(PokemonCard):
         # passive ability
         if (
             hasattr(action.source, "ability")
-            and isinstance(getattr(action.source, "ability"), PassiveAbility)
+            and isinstance(action.source.ability, PassiveAbility)
             and action.source.ability.abilityTrigger == AbilityTrigger.ATTACKING
         ):
             action.source.use_ability(action, state)
@@ -126,7 +126,7 @@ class PAR248IronHandsEX(PokemonCard):
         for card in state.stadium:
             if (
                 hasattr(card, "ability")
-                and isinstance(getattr(card, "ability"), PassiveAbility)
+                and isinstance(card.ability, PassiveAbility)
                 and card.ability.abilityTrigger == AbilityTrigger.ATTACKING
             ):
                 card.use_ability(action, state)

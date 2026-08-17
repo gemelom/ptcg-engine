@@ -1,24 +1,36 @@
+import copy
+
 from ptcg.core.ability import ActiveAbility
-from ptcg.core.action import AttackAction, PlayPokemonAction, UseAbilityAction
+from ptcg.core.action import (
+    AttackAction,
+    PlayPokemonAction,
+    UseAbilityAction,
+    choose_card_actions,
+)
 from ptcg.core.attack import Attack
-from ptcg.core.card import PokemonCard
+from ptcg.core.card import EnergyCard, PokemonCard
 from ptcg.core.enums import (
     AbilityType,
     CardPosition,
     CardType,
-    EnergyType,
     PokemonPosition,
     PokemonRule,
     PokemonType,
     Stage,
     SuperType,
 )
-from ptcg.core.reducer import reduce_attack_action, reduce_play_pokemon_action
+from ptcg.core.reducer import (
+    reduce_attack_damage,
+    reduce_choose_card_actions,
+    reduce_play_pokemon_action,
+)
 from ptcg.utils.utils import (
     check_energy,
     current_player,
     move_cards,
+    next_turn,
     opponent_active,
+    opponent_all_pokemon,
     opponent_player,
 )
 
@@ -81,8 +93,9 @@ class ASR046RadiantGreninja(PokemonCard):
 
         # If in active position, check if can attack
         if self.position == PokemonPosition.ACTIVE:
+            attached_energy = [card for card in self.attachment if isinstance(card, EnergyCard)]
             for attack in self.attacks:
-                if check_energy(attack.cost, self.energy):
+                if check_energy(attack.cost, self.energy) and len(attached_energy) >= 2:
                     targets = opponent_active(state)
                     if targets:
                         actions.append(AttackAction(state.turn, self, attack, targets[0]))
@@ -92,10 +105,7 @@ class ASR046RadiantGreninja(PokemonCard):
             if (
                 not self.abilityUsed
                 and not player.onceUsedTurn[ability.name]
-                and any(
-                    card.superType == SuperType.ENERGY and card.energyType == EnergyType.BASIC
-                    for card in player.hand
-                )
+                and any(card.superType == SuperType.ENERGY for card in player.hand)
             ):
                 actions.append(UseAbilityAction(state.turn, self, ability))
 
@@ -106,7 +116,7 @@ class ASR046RadiantGreninja(PokemonCard):
         if isinstance(action, PlayPokemonAction):
             reduce_play_pokemon_action(action, state)
         elif isinstance(action, UseAbilityAction):
-            self._concealed_cards_ability(action, state)
+            yield from self._concealed_cards_ability(action, state)
         elif isinstance(action, AttackAction):
             yield from self._moonlight_shuriken_attack(action, state)
 
@@ -114,17 +124,23 @@ class ASR046RadiantGreninja(PokemonCard):
         """Concealed Cards: Discard Energy from hand to draw 2 cards"""
         player = current_player(state)
 
-        # Find basic energy cards in hand
-        energy_cards = [
-            card
-            for card in player.hand
-            if card.superType == SuperType.ENERGY and card.energyType == EnergyType.BASIC
-        ]
+        # Concealed Cards can discard any Energy card, including Special Energy.
+        energy_cards = [card for card in player.hand if card.superType == SuperType.ENERGY]
 
         if energy_cards:
-            # Discard 1 energy card
+            actions = choose_card_actions(
+                player.id,
+                player.id,
+                1,
+                1,
+                energy_cards,
+                tips="Choose an Energy card from your hand to discard for Concealed Cards.",
+                source=self,
+            )
+            chosen_energy = yield from reduce_choose_card_actions(actions, state)
+
             move_cards(
-                energy_cards[0],
+                chosen_energy[0],
                 (player.id, CardPosition.HAND),
                 (player.id, CardPosition.DISCARD),
                 state,
@@ -147,32 +163,63 @@ class ASR046RadiantGreninja(PokemonCard):
 
     def _moonlight_shuriken_attack(self, action, state):
         """Moonlight Shuriken: Discard 2 energy, do 90 damage to 2 opponent Pokémon"""
-        current_player(state)
+        player = current_player(state)
         opponent = opponent_player(state)
 
-        # Discard 2 energy from this Pokémon
-        energy_to_discard = min(2, len(self.energy))
-        for _ in range(energy_to_discard):
-            if self.energy:
-                self.energy.pop(0)
+        attached_energy = [card for card in self.attachment if isinstance(card, EnergyCard)]
+        energy_actions = choose_card_actions(
+            player.id,
+            player.id,
+            2,
+            2,
+            attached_energy,
+            tips="Choose 2 Energy attached to Radiant Greninja to discard.",
+            source=self,
+        )
+        chosen_energy = yield from reduce_choose_card_actions(energy_actions, state)
+        source_position = (
+            CardPosition.ACTIVE_ATTACHMENT
+            if self.position == PokemonPosition.ACTIVE
+            else CardPosition.BENCH_ATTACHMENT
+        )
+        for energy_card in chosen_energy:
+            move_cards(
+                energy_card,
+                (player.id, source_position, self.index),
+                (player.id, CardPosition.DISCARD),
+                state,
+            )
+            for provided_type in energy_card.provides:
+                if provided_type in self.energy:
+                    self.energy.remove(provided_type)
 
-        # Choose up to 2 opponent Pokémon to damage
-        # For simplicity, we'll target Active and one benched Pokémon if available
-        targets = []
+        candidates = opponent_all_pokemon(state)
+        target_count = min(2, len(candidates))
+        target_actions = choose_card_actions(
+            player.id,
+            opponent.id,
+            target_count,
+            target_count,
+            candidates,
+            indexed=True,
+            tips="Choose 2 of your opponent's Pokémon for Moonlight Shuriken.",
+            source=self,
+        )
+        targets = yield from reduce_choose_card_actions(target_actions, state)
 
-        # Add active Pokémon
-        if opponent.active:
-            targets.append(opponent.active[0])
+        # Resolve originally Benched targets first so an Active knockout and
+        # forced promotion cannot change whether Weakness/Resistance applies.
+        selected_targets = [
+            (target, target.position == PokemonPosition.ACTIVE) for target in targets
+        ]
+        for target, was_active in sorted(selected_targets, key=lambda item: item[1]):
+            spread_attack = copy.copy(action.attack)
+            spread_attack.damage = 90
+            spread_action = AttackAction(state.turn, self, spread_attack, target)
+            yield from reduce_attack_damage(
+                spread_action,
+                state,
+                apply_weakness_resistance=was_active,
+            )
 
-        # Add one benched Pokémon
-        if opponent.bench:
-            targets.append(opponent.bench[0])
-
-        # Deal 90 damage to each target
-        for target in targets[:2]:
-            target.hp -= 90
-            if target.hp <= 0:
-                # Handle knockout
-                pass  # Knockout logic would go here
-
-        yield from reduce_attack_action(action, state)
+        next_turn(state)

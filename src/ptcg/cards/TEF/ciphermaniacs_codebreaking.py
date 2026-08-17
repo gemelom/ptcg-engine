@@ -21,10 +21,8 @@ class TEF145CiphermaniacsCodebreaking(SupporterCard):
         actions = []
 
         # Can use if no supporter played this turn and not first turn
-        if not player.supporterPlayedTurn and not player.firstTurn:
-            # Can use if at least 2 cards in deck (to search 2)
-            if len(player.left) >= 2:
-                actions.append(UseSupporterAction(state.turn, self))
+        if not player.supporterPlayedTurn and not player.firstTurn and len(player.left) >= 2:
+            actions.append(UseSupporterAction(state.turn, self))
 
         return actions
 
@@ -50,7 +48,7 @@ class TEF145CiphermaniacsCodebreaking(SupporterCard):
             # Step 2: Remove chosen cards from deck, then shuffle remaining
             for card in chosen:
                 player.left.remove(card)
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
 
             # Step 3: Player chooses which card goes on top (drawn first)
             tips = "Choose which card to place on top of your deck (it will be drawn first)."

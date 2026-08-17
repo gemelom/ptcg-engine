@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import List, Sequence
+from typing import ClassVar
 
 from ptcg.core.card import Card, EnergyCard, PokemonCard
 from ptcg.core.enums import CardPosition, PokemonPosition
@@ -10,7 +11,7 @@ from ptcg.core.state import State
 class StateCheckError(Exception):
     """Raised when state validation fails."""
 
-    def __init__(self, errors: List[str]):
+    def __init__(self, errors: list[str]):
         self.errors = errors
         super().__init__("\n".join(errors))
 
@@ -33,12 +34,12 @@ class StateChecker:
         checker.check()  # Raises StateCheckError if invalid
     """
 
-    POKEMON_ZONES: List[ZoneConfig] = [
+    POKEMON_ZONES: ClassVar[list[ZoneConfig]] = [
         ZoneConfig("active", CardPosition.ACTIVE, exact_size=1),
         ZoneConfig("bench", CardPosition.BENCH, max_size=5),
     ]
 
-    CARD_ZONES: List[ZoneConfig] = [
+    CARD_ZONES: ClassVar[list[ZoneConfig]] = [
         ZoneConfig("hand", CardPosition.HAND),
         ZoneConfig("left", CardPosition.LEFT),
         ZoneConfig("discard", CardPosition.DISCARD),
@@ -46,7 +47,7 @@ class StateChecker:
     ]
 
     def __init__(self):
-        self.errors: List[str] = []
+        self.errors: list[str] = []
 
     def check(self, state) -> None:
         """Run all checks. Raises StateCheckError if any validation fails."""

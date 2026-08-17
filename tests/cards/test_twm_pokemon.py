@@ -24,7 +24,11 @@ def test_dreepy_petty_grudge_damages_opponent():
         PlayerZones(left=[make_card("SVE-005")], prize=[make_card("SVE-007")], active=[defender]),
     )
 
-    attacks = [a for a in dreepy.get_actions(state) if isinstance(a, AttackAction) and a.attack.name == "Petty Grudge"]
+    attacks = [
+        a
+        for a in dreepy.get_actions(state)
+        if isinstance(a, AttackAction) and a.attack.name == "Petty Grudge"
+    ]
     assert len(attacks) == 1
 
     list(dreepy.reduce_action(attacks[0], state))
@@ -56,9 +60,7 @@ def test_drakloak_recon_directive_puts_top_card_in_hand():
     drakloak = make_card("TWM-129")
     top_card = make_card("PAF-007")
     second_card = make_card("PAF-008")
-    state = make_state(
-        PlayerZones(left=[top_card, second_card], active=[drakloak])
-    )
+    state = make_state(PlayerZones(left=[top_card, second_card], active=[drakloak]))
     state.player1.onceUsedTurn["Recon Directive"] = False
 
     ability_actions = [a for a in drakloak.get_actions(state) if isinstance(a, UseAbilityAction)]
@@ -76,7 +78,9 @@ def test_drakloak_recon_directive_puts_top_card_in_hand():
 
 def test_drakloak_recon_directive_unavailable_after_use():
     drakloak = make_card("TWM-129")
-    state = make_state(PlayerZones(left=[make_card("PAF-007"), make_card("PAF-008")], active=[drakloak]))
+    state = make_state(
+        PlayerZones(left=[make_card("PAF-007"), make_card("PAF-008")], active=[drakloak])
+    )
     drakloak.abilityUsed = True
 
     assert [a for a in drakloak.get_actions(state) if isinstance(a, UseAbilityAction)] == []
@@ -131,7 +135,7 @@ def test_munkidori_adrena_brain_moves_damage_counters_to_opponent():
         [lambda _info: [my_damaged], lambda _info: [opp_active]],
     )
 
-    assert my_damaged.hp == 70   # restored (moved 3 counters off)
+    assert my_damaged.hp == 70  # restored (moved 3 counters off)
     assert opp_active.hp == 300  # 330 - 30 (3 counters * 10)
     assert munkidori.abilityUsed is True
 
@@ -192,7 +196,11 @@ def test_dragapult_ex_phantom_dive_damages_active_and_bench():
         ),
     )
 
-    attacks = [a for a in dragapult.get_actions(state) if isinstance(a, AttackAction) and a.attack.name == "Phantom Dive"]
+    attacks = [
+        a
+        for a in dragapult.get_actions(state)
+        if isinstance(a, AttackAction) and a.attack.name == "Phantom Dive"
+    ]
     assert len(attacks) == 1
 
     drive_choices(
@@ -200,8 +208,8 @@ def test_dragapult_ex_phantom_dive_damages_active_and_bench():
         [lambda _info: [opp_bench]] * 6,
     )
 
-    assert opp_active.hp == 130   # 330 - 200
-    assert opp_bench.hp == 10     # 70 - 60 (6 counters * 10)
+    assert opp_active.hp == 130  # 330 - 200
+    assert opp_bench.hp == 10  # 70 - 60 (6 counters * 10)
     assert state.turn == state.player2.id
 
 
@@ -214,7 +222,11 @@ def test_dragapult_ex_jet_headbutt_damages_opponent():
         PlayerZones(left=[make_card("SVE-005")], prize=[make_card("SVE-007")], active=[defender]),
     )
 
-    attacks = [a for a in dragapult.get_actions(state) if isinstance(a, AttackAction) and a.attack.name == "Jet Headbutt"]
+    attacks = [
+        a
+        for a in dragapult.get_actions(state)
+        if isinstance(a, AttackAction) and a.attack.name == "Jet Headbutt"
+    ]
     assert len(attacks) == 1
 
     list(dragapult.reduce_action(attacks[0], state))

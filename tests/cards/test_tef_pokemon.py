@@ -1,7 +1,7 @@
 import pytest
 
 from ptcg.core.action import AttackAction, UseAbilityAction
-from ptcg.core.enums import CardType, EnergyType
+from ptcg.core.enums import CardType
 from tests.helpers.cards import make_card
 from tests.helpers.generator_driver import drive_choices
 from tests.helpers.state_builder import PlayerZones, make_state
@@ -77,7 +77,7 @@ def test_dudunsparce_run_away_draw_draws_three_and_shuffles_self_into_deck():
     ability_actions = [a for a in dudunsparce.get_actions(state) if isinstance(a, UseAbilityAction)]
     assert len(ability_actions) == 1
 
-    prompts = drive_choices(
+    drive_choices(
         dudunsparce.reduce_action(ability_actions[0], state),
         [lambda _info: [benched]],  # choose bench replacement
     )
@@ -153,7 +153,11 @@ def test_cinccino_special_roll_does_70_per_special_energy():
         ),
     )
 
-    attacks = [a for a in cinccino.get_actions(state) if isinstance(a, AttackAction) and a.attack.name == "Special Roll"]
+    attacks = [
+        a
+        for a in cinccino.get_actions(state)
+        if isinstance(a, AttackAction) and a.attack.name == "Special Roll"
+    ]
     assert len(attacks) == 1
 
     list(cinccino.reduce_action(attacks[0], state))
@@ -178,7 +182,11 @@ def test_cinccino_gentle_slap_damages_opponent():
         ),
     )
 
-    attacks = [a for a in cinccino.get_actions(state) if isinstance(a, AttackAction) and a.attack.name == "Gentle Slap"]
+    attacks = [
+        a
+        for a in cinccino.get_actions(state)
+        if isinstance(a, AttackAction) and a.attack.name == "Gentle Slap"
+    ]
     assert len(attacks) == 1
 
     list(cinccino.reduce_action(attacks[0], state))

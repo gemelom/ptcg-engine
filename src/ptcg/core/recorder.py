@@ -15,10 +15,10 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ptcg.core.action import Action
@@ -41,10 +41,10 @@ class GameEvent:
     """A single game event."""
 
     event_type: EventType
-    data: Dict[str, Any]
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+    data: dict[str, Any]
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary for JSON serialization."""
         return {
             "type": self.event_type.value,
@@ -89,8 +89,8 @@ class GameRecorder:
         self.seed = seed
         self.output_dir = output_dir
         self.auto_save = auto_save
-        self.events: List[GameEvent] = []
-        self._file_path: Optional[str] = None
+        self.events: list[GameEvent] = []
+        self._file_path: str | None = None
 
     @property
     def file_path(self) -> str:
@@ -147,7 +147,7 @@ class GameRecorder:
         self,
         min_cnt: int,
         max_cnt: int,
-        candidates: List[str],
+        candidates: list[str],
         tips: str = "",
     ) -> None:
         """Record a card selection prompt.
@@ -169,7 +169,7 @@ class GameRecorder:
         )
         self.events.append(event)
 
-    def record_termination(self, winner: Optional[PlayerId]) -> None:
+    def record_termination(self, winner: PlayerId | None) -> None:
         """Record game termination event.
 
         Args:
@@ -195,8 +195,9 @@ class GameRecorder:
         self._ensure_output_dir()
 
         with open(self.file_path, "w", encoding="utf-8") as f:
-            for event in self.events:
-                f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
+            f.writelines(
+                json.dumps(event.to_dict(), ensure_ascii=False) + "\n" for event in self.events
+            )
 
         return self.file_path
 
@@ -205,7 +206,7 @@ class GameRecorder:
         self.events.clear()
 
     @staticmethod
-    def load(file_path: str) -> List[Dict[str, Any]]:
+    def load(file_path: str) -> list[dict[str, Any]]:
         """Load game history from JSONL file.
 
         Args:
@@ -222,13 +223,13 @@ class GameRecorder:
                     events.append(json.loads(line))
         return events
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get a summary of the recorded game.
 
         Returns:
             Summary with event counts and metadata.
         """
-        action_counts: Dict[str, int] = {}
+        action_counts: dict[str, int] = {}
         for event in self.events:
             if event.event_type == EventType.ACTION:
                 action_type = event.data.get("actionType", "Unknown")

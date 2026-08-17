@@ -48,4 +48,4 @@ class PAL188SuperRod(ItemCard):
             move_cards(
                 targets, (player.id, CardPosition.DISCARD), (player.id, CardPosition.LEFT), state
             )
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)

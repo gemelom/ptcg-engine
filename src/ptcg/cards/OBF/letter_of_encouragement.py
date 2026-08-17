@@ -71,4 +71,4 @@ class OBF189LetterofEncouragement(ItemCard):
                         state,
                     )
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)

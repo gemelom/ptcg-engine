@@ -110,7 +110,9 @@ def test_obf_charmander_heat_tackle_unavailable_without_fire_energy():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[charmander]), PlayerZones(active=[defender]))
 
-    assert [action for action in charmander.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in charmander.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
 
 
 @pytest.mark.card("OBF-141")

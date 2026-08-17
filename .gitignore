@@ -44,4 +44,6 @@ node_modules/
 .ptcg/
 
 # Build artifacts
+/build/
+/dist/
 frontend/dist/

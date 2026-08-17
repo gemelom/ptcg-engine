@@ -17,8 +17,8 @@ from tests.helpers.state_builder import PlayerZones, make_state
 )
 def test_jacq_searches_up_to_two_evolution_pokemon():
     jacq = make_card("SVI-175")
-    evo1 = make_card("PAF-008")   # Charmeleon - Stage 1
-    evo2 = make_card("SVI-086")   # Gardevoir ex - Stage 2
+    evo1 = make_card("PAF-008")  # Charmeleon - Stage 1
+    evo2 = make_card("SVI-086")  # Gardevoir ex - Stage 2
     basic = make_card("PAF-007")  # Charmander - Basic (not a candidate)
     state = make_state(PlayerZones(hand=[jacq], left=[evo1, evo2, basic]))
 

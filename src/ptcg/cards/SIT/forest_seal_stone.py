@@ -84,6 +84,6 @@ class SIT156ForestSealStone(ToolCard):
                     (player.id, CardPosition.HAND),
                     state,
                 )
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
 
             player.onceUsedGame.update({CardTag.VSTAR: True})

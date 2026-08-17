@@ -67,10 +67,9 @@ class PAF008Charmeleon(PokemonCard):
         return actions
 
     def use_ability(self, action, state):
-        if isinstance(action, EffectAction):
-            if action.target == self:
-                action.effect.damage = 0
-                action.effect.specialCondition = None
+        if isinstance(action, EffectAction) and action.target == self:
+            action.effect.damage = 0
+            action.effect.specialCondition = None
 
     def reduce_action(self, action, state):
         if isinstance(action, EvolvePokemonAction):

@@ -26,10 +26,12 @@ def test_serena_effect1_discards_cards_and_draws_to_five():
     assert isinstance(actions[0], UseSupporterAction)
 
     to_discard = [hand_cards[0], hand_cards[1]]
-    prompts = drive_choices(
+    drive_choices(
         serena.reduce_action(actions[0], state),
         [
-            lambda info: [c for c in info["prompt"].candidates if c.name == "Effect 1: Discard & Draw"],
+            lambda info: [
+                c for c in info["prompt"].candidates if c.name == "Effect 1: Discard & Draw"
+            ],
             lambda _info: to_discard,
         ],
     )
@@ -41,17 +43,19 @@ def test_serena_effect1_discards_cards_and_draws_to_five():
 
 def test_serena_effect2_switches_opponent_benched_v_with_active():
     serena = make_card("SIT-164")
-    opponent_active = make_card("PAF-007")   # non-V active
-    benched_v = make_card("SIT-138")         # Lugia V - Pokemon V
+    opponent_active = make_card("PAF-007")  # non-V active
+    benched_v = make_card("SIT-138")  # Lugia V - Pokemon V
     state = make_state(
         PlayerZones(hand=[serena]),
         PlayerZones(active=[opponent_active], bench=[benched_v]),
     )
 
-    prompts = drive_choices(
+    drive_choices(
         serena.reduce_action(serena.get_actions(state)[0], state),
         [
-            lambda info: [c for c in info["prompt"].candidates if c.name == "Effect 2: Switch Pokemon V"],
+            lambda info: [
+                c for c in info["prompt"].candidates if c.name == "Effect 2: Switch Pokemon V"
+            ],
             lambda _info: [benched_v],
         ],
     )

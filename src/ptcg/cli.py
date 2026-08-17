@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import random
 from collections.abc import Sequence
-from typing import Optional
 
 from ptcg.core.action import Action
 from ptcg.core.envs import PokemonTCG
@@ -58,7 +57,7 @@ def select_action(actions: Sequence[Action], policy: str, rng: random.Random) ->
 def describe_action(action: Action) -> str:
     try:
         return action.to_nl()
-    except Exception:
+    except Exception:  # noqa: BLE001 - action renderers are third-party card code
         return repr(action)
 
 
@@ -100,7 +99,7 @@ def run(args: argparse.Namespace) -> int:
     return 1
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     return run(args)

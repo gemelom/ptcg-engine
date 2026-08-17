@@ -119,7 +119,7 @@ class MEW151MewEX(PokemonCard):
                 yield from reduce_attack_action(action, state)
 
         else:
-            raise ValueError(f"Invalid action: {action}")
+            raise TypeError(f"Invalid action: {action}")
 
     def _genome_hacking_attack(self, action, state):
         """Handle the Genome Hacking attack"""

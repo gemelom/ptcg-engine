@@ -50,7 +50,9 @@ def test_snorlax_thumping_snore_unavailable_without_three_energy():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[snorlax]), PlayerZones(active=[defender]))
 
-    assert [action for action in snorlax.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in snorlax.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
 
 
 def test_snorlax_unfazed_fat_prevents_effects_but_not_damage():

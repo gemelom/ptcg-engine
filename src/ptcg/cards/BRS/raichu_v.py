@@ -114,11 +114,11 @@ class BRS158RaichuV(PokemonCard):
             reduce_play_pokemon_action(action, state)
 
         elif isinstance(action, AttackAction):
-            if action.attack == self.attacks[0]:
+            if action.attack_template == self.attacks[0]:
                 # Fast Charge - search for lightning energy and attach
                 self.fastChargeUsed = True  # 标记Fast Charge已使用
                 yield from self._fast_charge_attack(action, state)
-            elif action.attack == self.attacks[1]:
+            elif action.attack_template == self.attacks[1]:
                 # Dynamic Spark - discard lightning energy for damage
                 yield from self._dynamic_spark_attack(action, state)
             else:
@@ -178,7 +178,7 @@ class BRS158RaichuV(PokemonCard):
                     )
 
         # Shuffle deck
-        shuffle_cards(player.left)
+        shuffle_cards(player.left, state)
 
         # End turn appropriately based on whether it's the first turn
         if player.firstTurn:

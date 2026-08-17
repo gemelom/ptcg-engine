@@ -7,7 +7,9 @@ from tests.helpers.state_builder import PlayerZones, make_state
 
 
 @pytest.mark.card("SIT-169")
-@pytest.mark.card_coverage("SIT-169", "get_actions", "reduce_action", "negative_case", "zone_change")
+@pytest.mark.card_coverage(
+    "SIT-169", "get_actions", "reduce_action", "negative_case", "zone_change"
+)
 def test_v_guard_energy_attaches_as_colorless_special_energy():
     v_guard_energy = make_card("SIT-169")
     lugia = make_card("SIT-138")

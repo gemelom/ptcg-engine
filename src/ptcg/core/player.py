@@ -1,5 +1,6 @@
 import copy
 import random
+from typing import Any
 
 from ptcg.core.action import (
     AttackAction,
@@ -9,7 +10,7 @@ from ptcg.core.action import (
     RetreatAction,
     UseAbilityAction,
 )
-from ptcg.core.card import ToolCard
+from ptcg.core.card import Card, EnergyCard, PokemonCard, ToolCard, TrainerCard
 from ptcg.core.enums import *
 from ptcg.core.reducer import reduce_retreat_action
 from ptcg.core.reward import Reward
@@ -21,18 +22,17 @@ class Player:
 
     def __init__(self, deck):
         self.set_deck(deck)
-        self.discard = []
-        self.hand = []
-        self.prize = []
-        self.discard = []
-        self.left = []
+        self.discard: list[Card] = []
+        self.hand: list[Card] = []
+        self.prize: list[Card] = []
+        self.left: list[Card] = []
 
-        self.active = []
-        self.bench = []
+        self.active: list[PokemonCard] = []
+        self.bench: list[PokemonCard] = []
 
         self.benchSize = 5
 
-        self.lostZone = []
+        self.lostZone: list[Card] = []
 
         self.energyPlayedTurn = False
         self.supporterPlayedTurn = True  # can't play supporter at first turn
@@ -50,8 +50,8 @@ class Player:
         self.reward = Reward()
 
         # Action trajectory tracking for each turn
-        self.current_turn_actions = []  # Store actions executed in current turn
-        self.turn_action_history = []  # Store action trajectories for all turns
+        self.current_turn_actions: list[dict[str, Any]] = []
+        self.turn_action_history: list[list[dict[str, Any]]] = []
 
     def reset_turn_stats(self):
         """
@@ -131,20 +131,23 @@ class Player:
             "total_turns": len(self.turn_action_history) + (1 if self.current_turn_actions else 0),
         }
 
-    def shuffle(self):
+    def shuffle(self, rng=None):
         """
         shuffle when game start until hand is valid
         """
-        random.shuffle(self.deck)
-        self.hand = self.deck[:7]
-        self.prize = self.deck[7:13]
-        self.left = self.deck[13:]
+        self.deck_composition.validate()
+        rng = rng or random
 
         def can_play(card):
             return card.superType == SuperType.POKEMON and card.stage == Stage.BASIC
 
-        if all(not can_play(card) for card in self.hand):
-            self.shuffle()
+        while True:
+            rng.shuffle(self.deck)
+            self.hand = self.deck[:7]
+            self.prize = self.deck[7:13]
+            self.left = self.deck[13:]
+            if any(can_play(card) for card in self.hand):
+                break
 
         def set_cards_position(cards, position):
             for idx, card in enumerate(cards):
@@ -168,35 +171,35 @@ class Player:
                 actions.extend(card.get_actions(state))
 
         # use hand (Trainer & Energy)
-        for card in self.hand:
+        for hand_card in self.hand:
             if (
-                card.superType == SuperType.ENERGY
+                isinstance(hand_card, EnergyCard)
                 and not self.energyPlayedTurn
-                or card.superType == SuperType.TRAINER
-                and card.trainerType != TrainerType.SUPPORTER
-                or card.superType == SuperType.TRAINER
-                and card.trainerType == TrainerType.SUPPORTER
+                or isinstance(hand_card, TrainerCard)
+                and hand_card.trainerType != TrainerType.SUPPORTER
+                or isinstance(hand_card, TrainerCard)
+                and hand_card.trainerType == TrainerType.SUPPORTER
                 and not self.supporterPlayedTurn
             ):
-                actions.extend(card.get_actions(state))
+                actions.extend(hand_card.get_actions(state))
 
         # use hand (Pokemon)
-        for card in self.hand:
-            if card.superType == SuperType.POKEMON and card.stage == Stage.BASIC:
+        for hand_card in self.hand:
+            if isinstance(hand_card, PokemonCard) and hand_card.stage == Stage.BASIC:
                 if len(self.active) == 0:
-                    actions.append(PlayPokemonAction(self.id, card, PokemonPosition.ACTIVE))
+                    actions.append(PlayPokemonAction(self.id, hand_card, PokemonPosition.ACTIVE))
                 if len(self.bench) < self.benchSize:
-                    actions.append(PlayPokemonAction(self.id, card, PokemonPosition.BENCH))
+                    actions.append(PlayPokemonAction(self.id, hand_card, PokemonPosition.BENCH))
 
             # evolve
-            elif card.superType == SuperType.POKEMON and card.stage != Stage.BASIC:
+            elif isinstance(hand_card, PokemonCard) and hand_card.stage != Stage.BASIC:
                 # can't evolve in first turn
                 if self.firstTurn:
                     continue
-                targets = check_evolve(card, state)
+                targets = check_evolve(hand_card, state)
                 if len(targets) != 0:
                     actions.extend(
-                        [EvolvePokemonAction(self.id, card, target) for target in targets]
+                        [EvolvePokemonAction(self.id, hand_card, target) for target in targets]
                     )
 
         # Check if active Pokémon's abilities are suppressed (e.g., by Flutter Mane's Midnight Fluttering)
@@ -259,8 +262,8 @@ class Player:
         elif isinstance(action, PassTurn):
             next_turn(state)
 
-    def get_once_used_turn(self):
-        onceUsedTurn = {}
+    def get_once_used_turn(self) -> dict[str, bool]:
+        onceUsedTurn: dict[str, bool] = {}
 
         # pokemon abilities
         for card in self.deck:
@@ -274,8 +277,8 @@ class Player:
 
         return onceUsedTurn
 
-    def get_once_used_game(self):
-        onceUsedGame = {}
+    def get_once_used_game(self) -> dict[Any, bool]:
+        onceUsedGame: dict[Any, bool] = {}
 
         # VSTAR, GX, EX
         for card in self.deck:
@@ -287,38 +290,38 @@ class Player:
     def get_obs(self):
         pass
 
-    def to_dict(self):
-        dict = {}
-        dict["active"] = []
-        dict["bench"] = []
-        dict["hand"] = []
-        dict["stadium"] = []
-        dict["deck"] = []
-        dict["discard"] = []
-        dict["prize"] = []
-        dict["lostZone"] = []
-        dict["onceUsed"] = {
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        result["active"] = []
+        result["bench"] = []
+        result["hand"] = []
+        result["stadium"] = []
+        result["deck"] = []
+        result["discard"] = []
+        result["prize"] = []
+        result["lostZone"] = []
+        result["onceUsed"] = {
             "supporter": str(self.supporterPlayedTurn),
             "energy": str(self.energyPlayedTurn),
             "stadiumPlayed": str(self.stadiumPlayedTurn),
             "stadiumUsed": str(self.stadiumUsedTurn),
             "retreat": str(self.retreatTurn),
         }
-        dict["vstar"] = str(self.onceUsedGame.get("VSTAR", False))
+        result["vstar"] = str(self.onceUsedGame.get("VSTAR", False))
 
-        for card in self.active:
-            dict["active"].append(card.to_dict())
-        for card in self.bench:
-            dict["bench"].append(card.to_dict())
-        for card in self.hand:
-            dict["hand"].append(card.to_dict())
-        for card in self.left:
-            dict["deck"].append(card.to_dict())
-        for card in self.discard:
-            dict["discard"].append(card.to_dict())
-        for card in self.prize:
-            dict["prize"].append(card.to_dict())
-        for card in self.lostZone:
-            dict["lostZone"].append(card.to_dict())
+        for active_card in self.active:
+            result["active"].append(active_card.to_dict())
+        for bench_card in self.bench:
+            result["bench"].append(bench_card.to_dict())
+        for hand_card in self.hand:
+            result["hand"].append(hand_card.to_dict())
+        for deck_card in self.left:
+            result["deck"].append(deck_card.to_dict())
+        for discarded_card in self.discard:
+            result["discard"].append(discarded_card.to_dict())
+        for prize_card in self.prize:
+            result["prize"].append(prize_card.to_dict())
+        for lost_card in self.lostZone:
+            result["lostZone"].append(lost_card.to_dict())
 
-        return dict
+        return result

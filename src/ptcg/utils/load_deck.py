@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List, Union
 
 from ptcg.core.card import Card
 from ptcg.core.card_registry import registry
@@ -60,7 +59,7 @@ def _resolve_deck_path(deck_source) -> Path:
     )
 
 
-def load_deck(deck_source: Union[str, Path, List[str]]) -> Deck:
+def load_deck(deck_source: str | Path | list[str]) -> Deck:
     """
     Load a deck from file or list of lines.
 
@@ -75,7 +74,7 @@ def load_deck(deck_source: Union[str, Path, List[str]]) -> Deck:
         ValueError: If a card line is invalid or card not found
         FileNotFoundError: If deck file cannot be found
     """
-    cards: List[Card] = []
+    cards: list[Card] = []
 
     # Load lines from file or use provided list
     if isinstance(deck_source, (str, Path)):

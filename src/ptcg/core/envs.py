@@ -28,14 +28,16 @@ Key Concepts:
 
 import inspect
 import random
+from collections.abc import Generator, Sequence
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Any, Literal
 
 from loguru import logger
 
 from ptcg.core.action import Action, PlayPokemonAction
-from ptcg.core.enums import Coin, PlayerId, PokemonPosition, Stage, SuperType
-from ptcg.core.exceptions import GameTermination
+from ptcg.core.card import PokemonCard
+from ptcg.core.enums import Coin, PlayerId, PokemonPosition, Stage
+from ptcg.core.exceptions import GameTermination, InvalidActionError
 from ptcg.core.player import Player
 from ptcg.core.recorder import GameRecorder
 from ptcg.core.reducer import (
@@ -83,25 +85,38 @@ class PokemonTCG:
 
     gamestate: State
     recorder: GameRecorder
-    winner: Optional[PlayerId]
-    cur_available_actions: list[Action]
-    reducer: Generator
+    winner: PlayerId | None
+    cur_available_actions: Sequence[Action]
+    reducer: Generator[Any, Any, Any]
 
     def __init__(
         self,
         seed: int = 0,
-        render_mode: Optional[str] = None,
+        render_mode: str | None = None,
         verbose: bool = False,
-        deck1: Optional[str] = None,
-        deck2: Optional[str] = None,
+        deck1: str | None = None,
+        deck2: str | None = None,
         record_game: bool = True,
+        invalid_action_policy: Literal["raise", "random"] = "raise",
+        expose_full_state: bool = False,
     ):
+        if invalid_action_policy not in ("raise", "random"):
+            raise ValueError(
+                "invalid_action_policy must be either 'raise' or 'random', "
+                f"got {invalid_action_policy!r}"
+            )
+
         self.seed = seed
+        # Python recommends separate Random instances for generators that must
+        # not share state: https://docs.python.org/3.12/library/random.html#random.Random
+        self.rng = random.Random(seed)
         self.render_mode = render_mode
         self.deck1 = deck1
         self.deck2 = deck2
         self.verbose = verbose
         self.record_game = record_game
+        self.invalid_action_policy = invalid_action_policy
+        self.expose_full_state = expose_full_state
         self.state_checker = StateChecker()
 
         if verbose:
@@ -117,7 +132,7 @@ class PokemonTCG:
     # Initialization & Reset
     # =========================================================================
 
-    def reset(self, options: Optional[dict] = None) -> tuple:
+    def reset(self, options: dict | None = None, *, seed: int | None = None) -> tuple:
         """Reset the game environment to initial state.
 
         This method:
@@ -128,15 +143,21 @@ class PokemonTCG:
 
         Args:
             options: Optional configuration (currently unused).
+            seed: Optional seed that resets this environment's independent random stream.
 
         Returns:
             Tuple of (observation, reward, done, info).
         """
+        if seed is not None:
+            self.set_seed(seed)
+
         self._load_decks()
         self._init_game_state()
         self._init_generator()
 
-        return self.reducer.send(None)
+        result = self.reducer.send(None)
+        self._remember_available_actions(result)
+        return result
 
     def _load_decks(self) -> None:
         """Load decks for both players from files."""
@@ -145,12 +166,20 @@ class PokemonTCG:
 
         self._deck1_cards = load_deck(self.deck1) if self.deck1 else load_deck(default_deck_path)
         self._deck2_cards = load_deck(self.deck2) if self.deck2 else load_deck(default_deck_path)
+        self._deck1_cards.validate()
+        self._deck2_cards.validate()
 
     def _init_game_state(self) -> None:
         player1 = Player(self._deck1_cards)
         player2 = Player(self._deck2_cards)
 
-        self.gamestate = State(player1, player2)
+        self.gamestate = State(
+            player1,
+            player2,
+            rng=self.rng,
+            invalid_action_policy=self.invalid_action_policy,
+            expose_full_state=self.expose_full_state,
+        )
         self.winner = None
         self.cur_available_actions = []
 
@@ -161,8 +190,8 @@ class PokemonTCG:
 
         self.gamestate.player1.id = PlayerId.PLAYER1
         self.gamestate.player2.id = PlayerId.PLAYER2
-        self.gamestate.player1.shuffle()
-        self.gamestate.player2.shuffle()
+        self.gamestate.player1.shuffle(self.rng)
+        self.gamestate.player2.shuffle(self.rng)
 
         self.start_stage = True
 
@@ -189,7 +218,7 @@ class PokemonTCG:
     # Game Loop (Generator-based)
     # =========================================================================
 
-    def _game_loop(self) -> Generator:
+    def _game_loop(self) -> Generator[Any, Any, Any]:
         """Main game loop generator.
 
         This generator implements the core game flow using Python's
@@ -223,7 +252,7 @@ class PokemonTCG:
 
             action = yield (obs, reward, done, info)
 
-    def _run_start_stage(self) -> Generator:
+    def _run_start_stage(self) -> Generator[Any, Any, Any]:
         """Run the game start stage where players choose active Pokémon.
 
         This handles the initial setup where each player selects their active Pokémon.
@@ -238,7 +267,7 @@ class PokemonTCG:
             basic_pokemon = [
                 card
                 for card in player.hand
-                if card.superType == SuperType.POKEMON and card.stage == Stage.BASIC
+                if isinstance(card, PokemonCard) and card.stage == Stage.BASIC
             ]
 
             actions = choose_card_actions(
@@ -279,32 +308,41 @@ class PokemonTCG:
         actions = self.get_actions(self.gamestate)
         self.cur_available_actions = actions
 
-        return (
-            self.gamestate.get_obs(),
-            0,
-            False,
-            {
-                "is_choosing_card": self.gamestate.is_choosing_card,
-                "raw_available_actions": actions,
-                "turn": self.gamestate.turn,
-                "full_state": self.gamestate,
-                "auto_executed": list(self.gamestate.auto_events),
-            },
-        )
+        info = {
+            "is_choosing_card": self.gamestate.is_choosing_card,
+            "raw_available_actions": actions,
+            "turn": self.gamestate.turn,
+            "auto_executed": list(self.gamestate.auto_events),
+        }
+        if self.expose_full_state:
+            info["full_state"] = self.gamestate
+        return (self.gamestate.get_obs(), 0, False, info)
 
     def _validate_action(self, action: Action) -> Action:
         if action in self.cur_available_actions:
             return action
 
         logger.debug(f"{self.gamestate.turn} invalid action: {action}")
-        return random.choice(self.cur_available_actions)
+        if self.invalid_action_policy == "random":
+            return self.rng.choice(self.cur_available_actions)
+
+        raise InvalidActionError(
+            f"Action {action!r} is not available for {self.gamestate.turn}; "
+            f"choose one of the {len(self.cur_available_actions)} actions in "
+            "info['raw_available_actions']"
+        )
+
+    def _remember_available_actions(self, result: tuple) -> None:
+        """Remember the exact action objects accepted by the next ``step`` call."""
+        info = result[3]
+        self.cur_available_actions = info.get("raw_available_actions", [])
 
     def _log_action(self, action: Action) -> None:
         if self.recorder:
             self.recorder.record_action(action)
         self.gamestate.actions_buffer.append(action)
 
-    def _execute_action(self, action: Action) -> Generator:
+    def _execute_action(self, action: Action) -> Generator[Any, Any, Any]:
         """Execute an action and handle any sub-interactions.
 
         This method delegates to the action's source (card/player) which
@@ -340,7 +378,7 @@ class PokemonTCG:
         if self.recorder:
             self.recorder.record_state(self.gamestate)
 
-    def _reduce_action(self) -> Generator:
+    def _reduce_action(self) -> Generator[Any, Any, Any]:
         """Generator that delegates action reduction to the source.
 
         The source (card or player) handles the actual state changes.
@@ -353,9 +391,12 @@ class PokemonTCG:
         source = action.source
 
         acting_player = current_player(self.gamestate)
-        if hasattr(action, "playerId") and action.playerId == acting_player.id:
-            if not isinstance(source, type(acting_player)):
-                acting_player.record_action(action)
+        if (
+            hasattr(action, "playerId")
+            and action.playerId == acting_player.id
+            and not isinstance(source, type(acting_player))
+        ):
+            acting_player.record_action(action)
 
         if inspect.isgeneratorfunction(source.reduce_action):
             yield from source.reduce_action(action, self.gamestate)
@@ -380,9 +421,10 @@ class PokemonTCG:
             "is_choosing_card": self.gamestate.is_choosing_card,
             "raw_available_actions": actions,
             "turn": self.gamestate.turn,
-            "full_state": self.gamestate,
             "auto_executed": list(self.gamestate.auto_events),
         }
+        if self.expose_full_state:
+            info["full_state"] = self.gamestate
         self.gamestate.auto_events = []
 
         if self.gamestate.turn_just_switched:
@@ -392,6 +434,8 @@ class PokemonTCG:
         if done:
             self.winner = winner
             info["winner"] = winner
+            if self.gamestate.termination_reason:
+                info["termination_reason"] = self.gamestate.termination_reason
 
         return obs, reward, done, info
 
@@ -412,15 +456,19 @@ class PokemonTCG:
         Returns:
             Tuple of (observation, reward, done, info).
         """
+        action = self._validate_action(action)
         current_player(self.gamestate).reward.clear()
 
         try:
-            return self.reducer.send(action)
+            result = self.reducer.send(action)
         except StopIteration:
             # Generator exhausted, create new one for next turn
             self.reducer = self._game_loop()
             self.reducer.send(None)
-            return self.reducer.send(action)
+            result = self.reducer.send(action)
+
+        self._remember_available_actions(result)
+        return result
 
     def set_seed(self, seed: int) -> None:
         """Set random seed for reproducibility.
@@ -429,4 +477,4 @@ class PokemonTCG:
             seed: The seed value.
         """
         self.seed = seed
-        random.seed(seed)
+        self.rng.seed(seed)

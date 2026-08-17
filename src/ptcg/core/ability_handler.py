@@ -9,19 +9,24 @@ from ptcg.core.ability import PassiveAbility
 from ptcg.core.enums import AbilityTrigger
 from ptcg.utils.utils import (
     current_active,
+    current_all_pokemon,
     current_player,
     is_active_ability_suppressed,
     opponent_all_pokemon,
+    opponent_player,
 )
 
 
-def _has_passive_ability(card, trigger: AbilityTrigger) -> bool:
-    """Check if a card has a passive ability with the given trigger."""
-    return (
-        hasattr(card, "ability")
-        and isinstance(getattr(card, "ability"), PassiveAbility)
-        and card.ability.abilityTrigger == trigger
-    )
+def _passive_abilities(card, trigger: AbilityTrigger) -> list[PassiveAbility]:
+    """Return passive abilities on a card that match the requested trigger."""
+    abilities = getattr(card, "ability", [])
+    if not isinstance(abilities, list):
+        abilities = [abilities]
+    return [
+        ability
+        for ability in abilities
+        if isinstance(ability, PassiveAbility) and ability.abilityTrigger == trigger
+    ]
 
 
 def trigger_passive_ability(card, action, state, trigger: AbilityTrigger) -> None:
@@ -34,9 +39,13 @@ def trigger_passive_ability(card, action, state, trigger: AbilityTrigger) -> Non
         state: Current game state
         trigger: The ability trigger type to match
     """
-    if _has_passive_ability(card, trigger):
-        card.use_ability(action, state)
-        ability_name = card.ability.name if hasattr(card.ability, "name") else "Unknown"
+    handler = getattr(card, "use_ability", None)
+    if not callable(handler):
+        return
+
+    for ability in _passive_abilities(card, trigger):
+        handler(action, state)
+        ability_name = ability.name if ability.name else "Unknown"
         card_name = card.name if hasattr(card, "name") else "Unknown"
         state.auto_events.append(f"Passive ability triggered: {card_name}'s {ability_name}.")
 
@@ -56,10 +65,14 @@ def trigger_attack_abilities(action, state) -> None:
         action: The AttackAction or EffectAction being performed
         state: Current game state
     """
-    # Trigger source's ATTACKING ability (unless suppressed by opponent's active, e.g., Midnight Fluttering)
+    # Trigger the attacking side's in-play abilities. Opposing effects such as
+    # Midnight Fluttering suppress only the Active Pokemon's abilities.
     source_player = current_player(state)
-    if not is_active_ability_suppressed(source_player, state):
-        trigger_passive_ability(action.source, action, state, AbilityTrigger.ATTACKING)
+    source_active_suppressed = is_active_ability_suppressed(source_player, state)
+    for card in current_all_pokemon(state):
+        if source_active_suppressed and card in source_player.active:
+            continue
+        trigger_passive_ability(card, action, state, AbilityTrigger.ATTACKING)
 
     # Trigger source's attachments' ATTACKING abilities
     for card in action.source.attachment:
@@ -70,8 +83,13 @@ def trigger_attack_abilities(action, state) -> None:
         for card in action.target.attachment:
             trigger_passive_ability(card, action, state, AbilityTrigger.ATTACKED)
 
-    # Trigger opponent Pokemon's ATTACKED abilities
+    # Trigger opponent Pokemon's ATTACKED abilities, respecting suppression of
+    # the opponent's Active Pokemon while leaving Benched abilities available.
+    target_player = opponent_player(state)
+    target_active_suppressed = is_active_ability_suppressed(target_player, state)
     for card in opponent_all_pokemon(state):
+        if target_active_suppressed and card in target_player.active:
+            continue
         trigger_passive_ability(card, action, state, AbilityTrigger.ATTACKED)
 
     # Trigger stadium's ATTACKING abilities

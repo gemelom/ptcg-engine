@@ -94,4 +94,4 @@ class PAR163EarthenVessel(ItemCard):
                 )
 
             # Shuffle deck
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
