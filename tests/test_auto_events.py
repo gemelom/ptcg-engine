@@ -298,8 +298,7 @@ def test_passive_ability_trigger_records_event():
             "text": "Prevent all damage done to Benched Pokémon.",
         }
     )
-    # card.ability is a single PassiveAbility instance (not a list)
-    # to match what _has_passive_ability checks
+    # A single ability remains supported for backward compatibility.
     card.ability = ability
     card.name = "Manaphy"
 
