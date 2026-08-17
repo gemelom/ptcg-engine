@@ -1,7 +1,7 @@
 import pytest
 
 from ptcg.core.action import AttackAction, UseAbilityAction
-from ptcg.core.enums import CardType
+from ptcg.core.enums import CardPosition, CardType, SpecialCondition
 from tests.helpers.cards import make_card
 from tests.helpers.generator_driver import drive_choices
 from tests.helpers.state_builder import PlayerZones, make_state
@@ -18,6 +18,7 @@ from tests.helpers.state_builder import PlayerZones, make_state
 def test_gardevoir_ex_miracle_force_damages_opponent():
     gardevoir = make_card("SVI-086")
     gardevoir.energy = [CardType.PSYCHIC, CardType.PSYCHIC, CardType.COLORLESS]
+    gardevoir.specialCondition = SpecialCondition.ASLEEP
     defender = make_card("PAF-054")
     state = make_state(
         PlayerZones(
@@ -39,6 +40,7 @@ def test_gardevoir_ex_miracle_force_damages_opponent():
     list(gardevoir.reduce_action(attacks[0], state))
 
     assert defender.hp == 140  # 330 - 190
+    assert gardevoir.specialCondition == SpecialCondition.NONE
     assert state.turn == state.player2.id
 
 
@@ -61,6 +63,73 @@ def test_gardevoir_ex_miracle_force_unavailable_when_on_bench():
     )
 
     assert [a for a in gardevoir.get_actions(state) if isinstance(a, AttackAction)] == []
+
+
+def test_gardevoir_ex_psychic_embrace_is_repeatable_and_uses_choices():
+    gardevoir = make_card("SVI-086")
+    kirlia = make_card("SIT-068")
+    first_energy = make_card("SVE-005")
+    second_energy = make_card("SVE-005")
+    state = make_state(
+        PlayerZones(
+            discard=[first_energy, second_energy],
+            active=[gardevoir],
+            bench=[kirlia],
+        )
+    )
+
+    first_action = next(
+        action for action in gardevoir.get_actions(state) if isinstance(action, UseAbilityAction)
+    )
+    drive_choices(
+        gardevoir.reduce_action(first_action, state),
+        [lambda _info: [second_energy], lambda _info: [kirlia]],
+    )
+
+    assert second_energy in kirlia.attachment
+    assert kirlia.energy == [CardType.PSYCHIC]
+    assert kirlia.hp == 60
+    assert second_energy.cardPosition == CardPosition.BENCH_ATTACHMENT
+    assert state.player1.energyPlayedTurn is False
+
+    second_action = next(
+        action for action in gardevoir.get_actions(state) if isinstance(action, UseAbilityAction)
+    )
+    drive_choices(
+        gardevoir.reduce_action(second_action, state),
+        [lambda _info: [first_energy], lambda _info: [gardevoir]],
+    )
+
+    assert first_energy in gardevoir.attachment
+    assert gardevoir.energy == [CardType.PSYCHIC]
+    assert gardevoir.hp == 290
+    assert state.player1.discard == []
+
+
+def test_gardevoir_ex_psychic_embrace_requires_basic_psychic_energy_and_safe_target():
+    gardevoir = make_card("SVI-086")
+    gardevoir.hp = 30
+    non_psychic = make_card("PAF-007")
+    psychic_energy = make_card("SVE-005")
+    mist_energy = make_card("TEF-161")
+    state = make_state(
+        PlayerZones(
+            discard=[mist_energy],
+            active=[gardevoir],
+            bench=[non_psychic],
+        )
+    )
+
+    assert [
+        action for action in gardevoir.get_actions(state) if isinstance(action, UseAbilityAction)
+    ] == []
+
+    state.player1.discard.append(psychic_energy)
+    gardevoir.hp = 20
+
+    assert [
+        action for action in gardevoir.get_actions(state) if isinstance(action, UseAbilityAction)
+    ] == []
 
 
 @pytest.mark.card("SVI-253")
