@@ -65,6 +65,7 @@ show_error_codes = true
 [dependency-groups]
 dev = [
     "mypy>=2.3.1",
+    "pip-audit>=2.10.1",
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
     "ruff>=0.14.0",
