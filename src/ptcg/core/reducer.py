@@ -236,6 +236,24 @@ def reduce_attack_action(
     Yields:
         (obs, reward, done, info) for any card selections needed.
     """
+    yield from reduce_attack_damage(action, state)
+
+    if auto_end_turn:
+        next_turn(state)
+
+
+def reduce_attack_damage(
+    action: "AttackAction",
+    state: "State",
+    *,
+    apply_weakness_resistance: bool = True,
+) -> StepGenerator:
+    """Apply one attack's damage to one target without ending the turn.
+
+    Spread attacks can call this once per selected Pokémon and decide whether
+    Weakness and Resistance apply based on the target's original position.
+    Knockout, prize, and replacement handling stays shared with normal attacks.
+    """
     trigger_attack_abilities(action, state)
     player = current_player(state)
     opponent = opponent_player(state)
@@ -244,17 +262,17 @@ def reduce_attack_action(
     source = cast("PokemonCard", action.source)
     target = cast("PokemonCard", action.target)
 
-    damage = _calculate_damage(source, target, action.attack.damage, state)
+    damage = (
+        _calculate_damage(source, target, action.attack.damage, state)
+        if apply_weakness_resistance
+        else action.attack.damage
+    )
     player.reward.apply_damage_dealt_reward(damage)
 
     if target.hp > damage:
         target.hp -= damage
     else:
         yield from _handle_knockout(target, player, opponent, state)
-
-    if auto_end_turn:
-        next_turn(state)
-
 
 def reduce_effect_action(
     action: EffectAction,
