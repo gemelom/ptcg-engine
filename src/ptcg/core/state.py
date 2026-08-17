@@ -28,6 +28,8 @@ class State:
     turn_just_switched: bool = False
     auto_events: List[str] = field(default_factory=list)
     rng: Optional[random.Random] = field(default=None, repr=False, compare=False)
+    termination_reason: Optional[str] = None
+    termination_loser: Optional[PlayerId] = None
 
     def get_area(self, area: Tuple[PlayerId, CardPosition, Optional[int]]) -> Sequence[Card]:
         if area[1] == CardPosition.STADIUM:
@@ -74,6 +76,7 @@ class State:
         result["turn"] = self.turn.name.lower() if self.turn else "none"
         result["timestep"] = self.timestep
         result["turn_number"] = self.turn_number
+        result["termination_reason"] = self.termination_reason
 
         return result
 

@@ -401,6 +401,8 @@ class PokemonTCG:
         if done:
             self.winner = winner
             info["winner"] = winner
+            if self.gamestate.termination_reason:
+                info["termination_reason"] = self.gamestate.termination_reason
 
         return obs, reward, done, info
 

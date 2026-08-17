@@ -14,6 +14,7 @@ from ptcg.core.enums import (
     PokemonPosition,
     SuperType,
 )
+from ptcg.core.exceptions import GameTermination
 
 if TYPE_CHECKING:
     from ptcg.core.action import Action
@@ -233,18 +234,13 @@ def judge_termination(state: State) -> Tuple[bool, Optional[PlayerId]]:
     terminated = False
     winner: Optional[PlayerId] = None
     player1, player2 = state.player1, state.player2
-    if (
-        len(player1.prize) == 0
-        or len(player2.active) + len(player2.bench) == 0
-        or len(player2.left) == 0
-    ):
+    if state.termination_reason == "deck_out" and state.termination_loser is not None:
+        terminated = True
+        winner = player2.id if state.termination_loser == player1.id else player1.id
+    elif len(player1.prize) == 0 or len(player2.active) + len(player2.bench) == 0:
         terminated = True
         winner = player1.id
-    elif (
-        len(player2.prize) == 0
-        or len(player1.active) + len(player1.bench) == 0
-        or len(player1.left) == 0
-    ):
+    elif len(player2.prize) == 0 or len(player1.active) + len(player1.bench) == 0:
         terminated = True
         winner = player2.id
     return terminated, winner
@@ -301,29 +297,37 @@ def next_turn(state: State) -> None:
     # pokemon dead last turn
     player.hasPokemonDead = False
 
-    # change turn and draw one card
+    # Change turn and draw one card. An empty deck loses only when the player
+    # must draw at the start of their turn, not when an effect empties it.
+    # Source: Pokemon TCG Rulebook, Turn Actions and deck-out FAQ.
+    # https://www.pokemon.com/static-assets/content-assets/cms2/pdf/trading-card-game/rulebook/par_rulebook_en.pdf
     done, _ = judge_termination(state)
     if done:  # can't draw card if game ends
         return
 
     if state.turn == state.player1.id:
         state.turn = state.player2.id
+        next_player = state.player2
         new_player_name = "PLAYER2"
-        move_cards(
-            state.player2.left[0],
-            (state.player2.id, CardPosition.LEFT),
-            (state.player2.id, CardPosition.HAND),
-            state,
-        )
     else:
         state.turn = state.player1.id
+        next_player = state.player1
         new_player_name = "PLAYER1"
-        move_cards(
-            state.player1.left[0],
-            (state.player1.id, CardPosition.LEFT),
-            (state.player1.id, CardPosition.HAND),
-            state,
+
+    if not next_player.left:
+        state.termination_reason = "deck_out"
+        state.termination_loser = next_player.id
+        state.auto_events.append(
+            f"{new_player_name} could not draw at the start of the turn and lost."
         )
+        raise GameTermination
+
+    move_cards(
+        next_player.left[0],
+        (next_player.id, CardPosition.LEFT),
+        (next_player.id, CardPosition.HAND),
+        state,
+    )
     state.auto_events.append(f"Turn switched to {new_player_name}. 1 card drawn from deck to hand.")
     state.end_turn = True
 
@@ -481,8 +485,3 @@ def get_name(cards: List[Card]) -> List[str]:
         if hasattr(card, "name"):
             name_list.append(card.name)
     return name_list
-
-
-# game termination eception
-class GameTermination(Exception):
-    pass
