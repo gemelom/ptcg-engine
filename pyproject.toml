@@ -24,7 +24,6 @@ classifiers = [
 ]
 dependencies = [
     "loguru>=0.7.0",
-    "pytest-cov>=7.1.0",
 ]
 
 [project.urls]
@@ -58,4 +57,6 @@ ignore = ["F403", "F405", "F541"]
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.14.0",
 ]
