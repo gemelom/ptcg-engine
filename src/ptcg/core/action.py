@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+from copy import deepcopy
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
@@ -56,12 +57,16 @@ class Action(ABC):
 
 class AttackAction(Action):
     attack: Attack
+    attack_template: Attack
     target: Card
 
     def __init__(self, playerId: PlayerId, source: Card, attack: Attack, target: Card) -> None:
         super().__init__(playerId, ActionType.ATTACK_ACTION)
         self.source = source
-        self.attack = attack
+        # Card attacks are immutable definitions. Effects and variable-damage
+        # reducers modify this per-action copy without leaking into future turns.
+        self.attack_template = attack
+        self.attack = deepcopy(attack)
         self.target = target
 
     def to_nl(self) -> str:

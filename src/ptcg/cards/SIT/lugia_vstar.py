@@ -171,7 +171,7 @@ class SIT139LugiaVSTAR(PokemonCard):
             reduce_evolve_pokemon_action(action, state)
 
         elif isinstance(action, AttackAction):
-            if action.attack == self.attacks[0]:
+            if action.attack_template == self.attacks[0]:
                 # Tempest Dive - standard attack
                 yield from reduce_attack_action(action, state)
             else:

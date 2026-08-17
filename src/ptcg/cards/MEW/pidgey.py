@@ -67,7 +67,7 @@ class MEW016Pidgey(PokemonCard):
             reduce_play_pokemon_action(action, state)
 
         elif isinstance(action, AttackAction):
-            if action.attack == self.attacks[0]:
+            if action.attack_template == self.attacks[0]:
                 player = current_player(state)
                 cards = [
                     card
@@ -105,5 +105,5 @@ class MEW016Pidgey(PokemonCard):
                 shuffle_cards(player.left, state)
                 auto_end_turn(state)
 
-            elif action.attack == self.attacks[1]:
+            elif action.attack_template == self.attacks[1]:
                 yield from reduce_attack_action(action, state)

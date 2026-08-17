@@ -89,10 +89,10 @@ class TWM200DragapultEX(PokemonCard):
             reduce_evolve_pokemon_action(action, state)
 
         elif isinstance(action, AttackAction):
-            if action.attack == self.attacks[0]:
+            if action.attack_template == self.attacks[0]:
                 yield from reduce_attack_action(action, state)
 
-            elif action.attack == self.attacks[1]:
+            elif action.attack_template == self.attacks[1]:
                 player = current_player(state)
                 opponent = opponent_player(state)
 
