@@ -135,17 +135,19 @@ class Player:
         """
         shuffle when game start until hand is valid
         """
+        self.deck_composition.validate()
         rng = rng or random
-        rng.shuffle(self.deck)
-        self.hand = self.deck[:7]
-        self.prize = self.deck[7:13]
-        self.left = self.deck[13:]
 
         def can_play(card):
             return card.superType == SuperType.POKEMON and card.stage == Stage.BASIC
 
-        if all(not can_play(card) for card in self.hand):
-            self.shuffle(rng)
+        while True:
+            rng.shuffle(self.deck)
+            self.hand = self.deck[:7]
+            self.prize = self.deck[7:13]
+            self.left = self.deck[13:]
+            if any(can_play(card) for card in self.hand):
+                break
 
         def set_cards_position(cards, position):
             for idx, card in enumerate(cards):

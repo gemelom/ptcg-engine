@@ -152,6 +152,8 @@ class PokemonTCG:
 
         self._deck1_cards = load_deck(self.deck1) if self.deck1 else load_deck(default_deck_path)
         self._deck2_cards = load_deck(self.deck2) if self.deck2 else load_deck(default_deck_path)
+        self._deck1_cards.validate()
+        self._deck2_cards.validate()
 
     def _init_game_state(self) -> None:
         player1 = Player(self._deck1_cards)
