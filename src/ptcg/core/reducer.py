@@ -555,7 +555,7 @@ def reduce_choose_card_actions(
     state.is_choosing_card = True
     state.choose_card_list = prompt.candidates
 
-    obs = state.get_obs()
+    obs = state.get_obs(player.id)
     done = False
     reward = player.reward.calculate_step_reward()
     info = {
@@ -563,9 +563,10 @@ def reduce_choose_card_actions(
         "raw_available_actions": available_actions,
         "prompt": prompt,
         "turn": state.turn,
-        "full_state": state,
         "auto_executed": list(state.auto_events),
     }
+    if state.expose_full_state:
+        info["full_state"] = state
     state.auto_events = []
 
     choose_card_action = yield (obs, reward, done, info)

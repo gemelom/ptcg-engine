@@ -58,7 +58,7 @@ def test_pass_turn_reports_deck_out_through_environment_result():
     for _ in range(2):
         _obs, _reward, _done, info = env.step(info["raw_available_actions"][0])
 
-    state = info["full_state"]
+    state = env.gamestate
     opponent_player(state).left.clear()
     pass_turn = next(
         action for action in info["raw_available_actions"] if isinstance(action, PassTurn)

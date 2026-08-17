@@ -73,6 +73,12 @@ The environment follows a Gym-like shape:
 - `reset()` returns `(obs, reward, done, info)`.
 - `step(action)` advances the game and returns `(obs, reward, done, info)`.
 - `info["raw_available_actions"]` contains the valid engine action objects.
+- `obs` is a detached, player-relative dictionary: the opponent's hand and all
+  deck/Prize identities are hidden.
+
+For engine debugging only, `PokemonTCG(expose_full_state=True)` adds the mutable
+`State` object to `info["full_state"]`. Do not enable this for agents that must
+respect hidden information.
 
 ## Decks
 

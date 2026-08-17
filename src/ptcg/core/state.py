@@ -29,6 +29,7 @@ class State:
     auto_events: List[str] = field(default_factory=list)
     rng: Optional[random.Random] = field(default=None, repr=False, compare=False)
     invalid_action_policy: str = "raise"
+    expose_full_state: bool = False
     termination_reason: Optional[str] = None
     termination_loser: Optional[PlayerId] = None
 
@@ -81,8 +82,46 @@ class State:
 
         return result
 
-    def get_obs(self) -> State:
-        return self
+    def get_obs(self, viewer_id: Optional[PlayerId] = None) -> Dict[str, Any]:
+        """Return a detached observation from one player's perspective.
+
+        Hands are visible only to their owner. Deck and Prize identities stay
+        hidden from both players; only their counts are observable.
+        """
+        viewer_id = viewer_id or self.turn or self.player1.id
+        if viewer_id == self.player1.id:
+            viewer, opponent = self.player1, self.player2
+        elif viewer_id == self.player2.id:
+            viewer, opponent = self.player2, self.player1
+        else:
+            raise ValueError(f"Unknown observation viewer: {viewer_id}")
+
+        return {
+            "viewer": viewer.id.name.lower(),
+            "turn": self.turn.name.lower() if self.turn else None,
+            "timestep": self.timestep,
+            "turn_number": self.turn_number,
+            "is_choosing_card": self.is_choosing_card,
+            "stadium": [card.to_dict() for card in self.stadium],
+            "self": self._player_observation(viewer, reveal_hand=True),
+            "opponent": self._player_observation(opponent, reveal_hand=False),
+            "auto_events": list(self.auto_events),
+            "termination_reason": self.termination_reason,
+        }
+
+    @staticmethod
+    def _player_observation(player: Player, *, reveal_hand: bool) -> Dict[str, Any]:
+        return {
+            "id": player.id.name.lower(),
+            "active": [card.to_dict() for card in player.active],
+            "bench": [card.to_dict() for card in player.bench],
+            "hand": [card.to_dict() for card in player.hand] if reveal_hand else None,
+            "hand_count": len(player.hand),
+            "deck_count": len(player.left),
+            "prize_count": len(player.prize),
+            "discard": [card.to_dict() for card in player.discard],
+            "lost_zone": [card.to_dict() for card in player.lostZone],
+        }
 
     def get_opponent_actions_buffer(self) -> List[Action]:
         opponent_actions: List[Action] = []

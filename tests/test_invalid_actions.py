@@ -17,7 +17,7 @@ def _complete_setup(env: PokemonTCG):
 def test_invalid_regular_action_raises_without_mutating_state():
     env = PokemonTCG(seed=42, record_game=False)
     info = _complete_setup(env)
-    state = info["full_state"]
+    state = env.gamestate
     timestep = state.timestep
     recorded_actions = list(state.actions_buffer)
     invalid_action = PassTurn(state.turn, state.player1)

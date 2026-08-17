@@ -12,7 +12,7 @@ def _setup_signature(env: PokemonTCG) -> tuple:
         action = info["raw_available_actions"][0]
         _obs, _reward, done, info = env.step(action)
 
-    state = info["full_state"]
+    state = env.gamestate
     return (
         tuple(card.id for card in state.player1.hand),
         tuple(card.id for card in state.player1.prize),
@@ -42,7 +42,7 @@ def test_environment_randomness_is_isolated_when_games_are_interleaved():
     for _ in range(2):
         _obs, _reward, _done, info = env.step(info["raw_available_actions"][0])
 
-    state = info["full_state"]
+    state = env.gamestate
     actual = (
         tuple(card.id for card in state.player1.hand),
         tuple(card.id for card in state.player1.prize),

@@ -96,6 +96,7 @@ class PokemonTCG:
         deck2: Optional[str] = None,
         record_game: bool = True,
         invalid_action_policy: Literal["raise", "random"] = "raise",
+        expose_full_state: bool = False,
     ):
         if invalid_action_policy not in ("raise", "random"):
             raise ValueError(
@@ -113,6 +114,7 @@ class PokemonTCG:
         self.verbose = verbose
         self.record_game = record_game
         self.invalid_action_policy = invalid_action_policy
+        self.expose_full_state = expose_full_state
         self.state_checker = StateChecker()
 
         if verbose:
@@ -174,6 +176,7 @@ class PokemonTCG:
             player2,
             rng=self.rng,
             invalid_action_policy=self.invalid_action_policy,
+            expose_full_state=self.expose_full_state,
         )
         self.winner = None
         self.cur_available_actions = []
@@ -303,18 +306,15 @@ class PokemonTCG:
         actions = self.get_actions(self.gamestate)
         self.cur_available_actions = actions
 
-        return (
-            self.gamestate.get_obs(),
-            0,
-            False,
-            {
-                "is_choosing_card": self.gamestate.is_choosing_card,
-                "raw_available_actions": actions,
-                "turn": self.gamestate.turn,
-                "full_state": self.gamestate,
-                "auto_executed": list(self.gamestate.auto_events),
-            },
-        )
+        info = {
+            "is_choosing_card": self.gamestate.is_choosing_card,
+            "raw_available_actions": actions,
+            "turn": self.gamestate.turn,
+            "auto_executed": list(self.gamestate.auto_events),
+        }
+        if self.expose_full_state:
+            info["full_state"] = self.gamestate
+        return (self.gamestate.get_obs(), 0, False, info)
 
     def _validate_action(self, action: Action) -> Action:
         if action in self.cur_available_actions:
@@ -416,9 +416,10 @@ class PokemonTCG:
             "is_choosing_card": self.gamestate.is_choosing_card,
             "raw_available_actions": actions,
             "turn": self.gamestate.turn,
-            "full_state": self.gamestate,
             "auto_executed": list(self.gamestate.auto_events),
         }
+        if self.expose_full_state:
+            info["full_state"] = self.gamestate
         self.gamestate.auto_events = []
 
         if self.gamestate.turn_just_switched:
