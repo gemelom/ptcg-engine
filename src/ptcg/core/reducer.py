@@ -12,7 +12,7 @@ Generator Pattern:
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Any, Generator, List, Tuple, cast
+from typing import TYPE_CHECKING, Any, Generator, List, Sequence, Tuple, cast
 
 from loguru import logger
 
@@ -521,7 +521,7 @@ def reduce_attach_energy_action(
 
 
 def reduce_choose_card_actions(
-    actions: Tuple[List[ChooseCardAction], ChooseCardPrompt],
+    actions: Tuple[Sequence[ChooseCardAction], ChooseCardPrompt],
     state: "State",
 ) -> Generator[Tuple["State", float, bool, dict], ChooseCardAction, List["Card"]]:
     """Reduce a card selection prompt.

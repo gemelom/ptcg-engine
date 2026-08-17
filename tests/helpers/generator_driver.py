@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Callable, Generator, Iterable
+from collections.abc import Callable, Generator, Iterable, Sequence
 from typing import Any
 
 from ptcg.core.action import ChooseCardAction
@@ -43,7 +43,9 @@ def _snapshot_info(info: dict[str, Any]) -> dict[str, Any]:
     return snapshot
 
 
-def _find_matching_choice(actions: list[ChooseCardAction], chosen: list[Card]) -> ChooseCardAction:
+def _find_matching_choice(
+    actions: Sequence[ChooseCardAction], chosen: list[Card]
+) -> ChooseCardAction:
     for action in actions:
         if action.chosen == chosen:
             return action

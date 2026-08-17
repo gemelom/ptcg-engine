@@ -29,7 +29,7 @@ Key Concepts:
 import inspect
 import random
 from pathlib import Path
-from typing import Generator, Literal, Optional
+from typing import Generator, Literal, Optional, Sequence
 
 from loguru import logger
 
@@ -84,7 +84,7 @@ class PokemonTCG:
     gamestate: State
     recorder: GameRecorder
     winner: Optional[PlayerId]
-    cur_available_actions: list[Action]
+    cur_available_actions: Sequence[Action]
     reducer: Generator
 
     def __init__(
@@ -333,7 +333,7 @@ class PokemonTCG:
     def _remember_available_actions(self, result: tuple) -> None:
         """Remember the exact action objects accepted by the next ``step`` call."""
         info = result[3]
-        self.cur_available_actions = list(info.get("raw_available_actions", []))
+        self.cur_available_actions = info.get("raw_available_actions", [])
 
     def _log_action(self, action: Action) -> None:
         if self.recorder:

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import itertools
-from copy import deepcopy
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from collections.abc import Iterator, Sequence
+from copy import deepcopy
+from math import comb
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, overload
 
 from ptcg.core.enums import ActionType, CardPosition, PlayerId, PokemonPosition
 
@@ -337,6 +339,124 @@ class ChooseCardAction(Action):
         return card_indices
 
 
+class ChooseCardActionSpace(Sequence[ChooseCardAction]):
+    """Lazy sequence of all valid combinations for one card-choice prompt."""
+
+    def __init__(
+        self,
+        playerId: PlayerId,
+        targetId: PlayerId,
+        min_cnt: int,
+        max_cnt: int,
+        candidates: List[Card],
+        *,
+        indexed: bool = False,
+        hidden: bool = False,
+    ) -> None:
+        if min_cnt < 0 or max_cnt < min_cnt:
+            raise ValueError(
+                f"Invalid choice bounds: min_cnt={min_cnt}, max_cnt={max_cnt}"
+            )
+        self.playerId = playerId
+        self.targetId = targetId
+        self.min_cnt = min_cnt
+        self.max_cnt = max_cnt
+        self.candidates = list(candidates)
+        self.indexed = indexed
+        self.hidden = hidden
+        self._selection_counts = tuple(
+            range(min_cnt, min(max_cnt, len(self.candidates)) + 1)
+        )
+        self._size = sum(
+            comb(len(self.candidates), count) for count in self._selection_counts
+        )
+
+    def __len__(self) -> int:
+        return self._size
+
+    def __iter__(self) -> Iterator[ChooseCardAction]:
+        for count in self._selection_counts:
+            for chosen in itertools.combinations(self.candidates, count):
+                yield self._make_action(list(chosen))
+
+    @overload
+    def __getitem__(self, index: int) -> ChooseCardAction: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> List[ChooseCardAction]: ...
+
+    def __getitem__(self, index: int | slice) -> ChooseCardAction | List[ChooseCardAction]:
+        if isinstance(index, slice):
+            return [self[position] for position in range(*index.indices(len(self)))]
+
+        if index < 0:
+            index += len(self)
+        if index < 0 or index >= len(self):
+            raise IndexError("choice action index out of range")
+
+        for count in self._selection_counts:
+            bucket_size = comb(len(self.candidates), count)
+            if index < bucket_size:
+                chosen_indices = self._unrank_combination(count, index)
+                return self._make_action(
+                    [self.candidates[position] for position in chosen_indices]
+                )
+            index -= bucket_size
+        raise IndexError("choice action index out of range")
+
+    def __contains__(self, value: object) -> bool:
+        if not isinstance(value, ChooseCardAction):
+            return False
+        if (
+            value.playerId != self.playerId
+            or value.targetId != self.targetId
+            or value.indexed != self.indexed
+            or value.hidden != self.hidden
+            or not self.min_cnt <= len(value.chosen) <= self.max_cnt
+            or len(value.candidates) != len(self.candidates)
+            or any(
+                actual is not expected
+                for actual, expected in zip(value.candidates, self.candidates)
+            )
+        ):
+            return False
+
+        candidate_positions = {id(card): index for index, card in enumerate(self.candidates)}
+        try:
+            chosen_positions = [candidate_positions[id(card)] for card in value.chosen]
+        except KeyError:
+            return False
+        return len(set(chosen_positions)) == len(chosen_positions) and chosen_positions == sorted(
+            chosen_positions
+        )
+
+    def _make_action(self, chosen: List[Card]) -> ChooseCardAction:
+        return ChooseCardAction(
+            self.playerId,
+            self.targetId,
+            chosen=chosen,
+            candidates=self.candidates,
+            indexed=self.indexed,
+            hidden=self.hidden,
+        )
+
+    def _unrank_combination(self, count: int, rank: int) -> List[int]:
+        """Return the indices of the lexicographically ranked combination."""
+        result: List[int] = []
+        start = 0
+        total_candidates = len(self.candidates)
+        for position in range(count):
+            remaining = count - position - 1
+            for candidate_index in range(start, total_candidates - remaining):
+                suffix_count = comb(total_candidates - candidate_index - 1, remaining)
+                if rank < suffix_count:
+                    result.append(candidate_index)
+                    start = candidate_index + 1
+                    break
+                rank -= suffix_count
+        return result
+
+
 class ChooseCardPrompt:
     min_cnt: int
     max_cnt: int
@@ -372,7 +492,7 @@ def choose_card_actions(
     hidden: bool = False,
     tips: str = "",
     source: Optional[Card] = None,
-) -> Tuple[List[ChooseCardAction], ChooseCardPrompt]:
+) -> Tuple[ChooseCardActionSpace, ChooseCardPrompt]:
     """
     Generate all possible ChooseCardAction combinations.
 
@@ -388,22 +508,18 @@ def choose_card_actions(
         source: The card that triggered this choice (stored on prompt, not actions)
 
     Returns:
-        Tuple of (list of possible actions, prompt info)
+        Tuple of (lazy sequence of possible actions, prompt info)
     """
     prompt = ChooseCardPrompt(min_cnt, max_cnt, candidates, hidden, tips, source=source)
 
-    available_actions: List[ChooseCardAction] = []
-    for cnt in range(min_cnt, max_cnt + 1):
-        for combo in itertools.combinations(candidates, cnt):
-            available_actions.append(
-                ChooseCardAction(
-                    playerId,
-                    targetId,
-                    chosen=list(combo),
-                    candidates=candidates,
-                    indexed=indexed,
-                    hidden=hidden,
-                )
-            )
+    available_actions = ChooseCardActionSpace(
+        playerId,
+        targetId,
+        min_cnt,
+        max_cnt,
+        candidates,
+        indexed=indexed,
+        hidden=hidden,
+    )
 
     return (available_actions, prompt)
