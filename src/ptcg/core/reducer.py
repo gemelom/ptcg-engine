@@ -276,6 +276,27 @@ def reduce_attack_damage(
         yield from _handle_knockout(target, player, opponent, state)
 
 
+def reduce_recoil_damage(source: PokemonCard, damage: int, state: State) -> StepGenerator:
+    """Apply attack recoil to the attacking Pokémon without Weakness or Resistance.
+
+    If recoil causes a knockout, the opponent takes prizes and the attacking
+    player replaces an Active Pokémon before the turn ends.
+    """
+    player = current_player(state)
+    opponent = opponent_player(state)
+
+    if source.hp > damage:
+        source.hp -= damage
+        return
+
+    attacking_turn = player.id
+    state.turn = opponent.id
+    try:
+        yield from _handle_knockout(source, opponent, player, state)
+    finally:
+        state.turn = attacking_turn
+
+
 def reduce_effect_action(
     action: EffectAction,
     state: State,

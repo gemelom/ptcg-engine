@@ -7,6 +7,120 @@ from tests.helpers.generator_driver import drive_choices
 from tests.helpers.state_builder import PlayerZones, make_state
 
 
+@pytest.mark.card("SVI-165")
+@pytest.mark.card_coverage(
+    "SVI-165",
+    "get_actions",
+    "reduce_action",
+    "negative_case",
+    "damage",
+)
+def test_flamigo_nosedive_damages_opponent_and_itself():
+    flamigo = make_card("SVI-165")
+    flamigo.energy = [CardType.COLORLESS, CardType.COLORLESS, CardType.COLORLESS]
+    defender = make_card("PAF-054")
+    state = make_state(
+        PlayerZones(
+            left=[make_card("SVE-002")],
+            prize=[make_card("SVE-004")],
+            active=[flamigo],
+        ),
+        PlayerZones(
+            left=[make_card("SVE-005")],
+            prize=[make_card("SVE-007")],
+            active=[defender],
+        ),
+    )
+
+    attacks = [
+        action
+        for action in flamigo.get_actions(state)
+        if isinstance(action, AttackAction) and action.attack.name == "Nosedive"
+    ]
+    assert len(attacks) == 1
+
+    list(flamigo.reduce_action(attacks[0], state))
+
+    assert defender.hp == 220  # 330 - 110
+    assert flamigo.hp == 90  # 110 - 20 recoil
+    assert state.turn == state.player2.id
+
+
+def test_flamigo_flap_damages_without_recoil():
+    flamigo = make_card("SVI-165")
+    flamigo.energy = [CardType.COLORLESS]
+    defender = make_card("PAF-054")
+    state = make_state(
+        PlayerZones(left=[make_card("SVE-002")], active=[flamigo]),
+        PlayerZones(left=[make_card("SVE-005")], active=[defender]),
+    )
+
+    attacks = [action for action in flamigo.get_actions(state) if isinstance(action, AttackAction)]
+
+    assert [action.attack.name for action in attacks] == ["Flap"]
+    list(flamigo.reduce_action(attacks[0], state))
+    assert defender.hp == 300
+    assert flamigo.hp == 110
+
+
+def test_flamigo_recoil_knockout_awards_opponent_and_replaces_active():
+    flamigo = make_card("SVI-165")
+    flamigo.hp = 20
+    flamigo.energy = [CardType.COLORLESS, CardType.COLORLESS, CardType.COLORLESS]
+    replacement = make_card("PAF-007")
+    defender = make_card("PAF-054")
+    first_prize = make_card("SVE-005")
+    second_prize = make_card("SVE-007")
+    state = make_state(
+        PlayerZones(
+            left=[make_card("SVE-002")],
+            prize=[make_card("SVE-004")],
+            active=[flamigo],
+            bench=[replacement],
+        ),
+        PlayerZones(
+            left=[make_card("SVE-008")],
+            prize=[first_prize, second_prize],
+            active=[defender],
+        ),
+    )
+    action = next(
+        action
+        for action in flamigo.get_actions(state)
+        if isinstance(action, AttackAction) and action.attack.name == "Nosedive"
+    )
+
+    drive_choices(
+        flamigo.reduce_action(action, state),
+        [lambda _info: [first_prize], lambda _info: [replacement]],
+    )
+
+    assert [card.id for card in state.player1.discard] == ["SVI-165"]
+    assert state.player1.active == [replacement]
+    assert first_prize in state.player2.hand
+    assert state.turn == state.player2.id
+
+
+def test_flamigo_cannot_attack_without_energy_or_from_bench():
+    flamigo = make_card("SVI-165")
+    defender = make_card("PAF-054")
+    state = make_state(PlayerZones(active=[flamigo]), PlayerZones(active=[defender]))
+
+    assert [
+        action for action in flamigo.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
+
+    flamigo.energy = [CardType.COLORLESS, CardType.COLORLESS, CardType.COLORLESS]
+    state = make_state(
+        PlayerZones(active=[make_card("PAF-007")], bench=[flamigo]),
+        PlayerZones(active=[defender]),
+    )
+
+    assert [
+        action for action in flamigo.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
+
+
 @pytest.mark.card("SVI-086")
 @pytest.mark.card_coverage(
     "SVI-086",
