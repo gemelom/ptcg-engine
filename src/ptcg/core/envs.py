@@ -30,12 +30,13 @@ import inspect
 import random
 from collections.abc import Generator, Sequence
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from loguru import logger
 
 from ptcg.core.action import Action, PlayPokemonAction
-from ptcg.core.enums import Coin, PlayerId, PokemonPosition, Stage, SuperType
+from ptcg.core.card import PokemonCard
+from ptcg.core.enums import Coin, PlayerId, PokemonPosition, Stage
 from ptcg.core.exceptions import GameTermination, InvalidActionError
 from ptcg.core.player import Player
 from ptcg.core.recorder import GameRecorder
@@ -86,7 +87,7 @@ class PokemonTCG:
     recorder: GameRecorder
     winner: PlayerId | None
     cur_available_actions: Sequence[Action]
-    reducer: Generator
+    reducer: Generator[Any, Any, Any]
 
     def __init__(
         self,
@@ -217,7 +218,7 @@ class PokemonTCG:
     # Game Loop (Generator-based)
     # =========================================================================
 
-    def _game_loop(self) -> Generator:
+    def _game_loop(self) -> Generator[Any, Any, Any]:
         """Main game loop generator.
 
         This generator implements the core game flow using Python's
@@ -251,7 +252,7 @@ class PokemonTCG:
 
             action = yield (obs, reward, done, info)
 
-    def _run_start_stage(self) -> Generator:
+    def _run_start_stage(self) -> Generator[Any, Any, Any]:
         """Run the game start stage where players choose active Pokémon.
 
         This handles the initial setup where each player selects their active Pokémon.
@@ -266,7 +267,7 @@ class PokemonTCG:
             basic_pokemon = [
                 card
                 for card in player.hand
-                if card.superType == SuperType.POKEMON and card.stage == Stage.BASIC
+                if isinstance(card, PokemonCard) and card.stage == Stage.BASIC
             ]
 
             actions = choose_card_actions(
@@ -341,7 +342,7 @@ class PokemonTCG:
             self.recorder.record_action(action)
         self.gamestate.actions_buffer.append(action)
 
-    def _execute_action(self, action: Action) -> Generator:
+    def _execute_action(self, action: Action) -> Generator[Any, Any, Any]:
         """Execute an action and handle any sub-interactions.
 
         This method delegates to the action's source (card/player) which
@@ -377,7 +378,7 @@ class PokemonTCG:
         if self.recorder:
             self.recorder.record_state(self.gamestate)
 
-    def _reduce_action(self) -> Generator:
+    def _reduce_action(self) -> Generator[Any, Any, Any]:
         """Generator that delegates action reduction to the source.
 
         The source (card or player) handles the actual state changes.

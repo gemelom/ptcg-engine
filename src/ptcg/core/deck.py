@@ -49,7 +49,7 @@ class Deck:
 
     def get_deck_description(self) -> str:
         """Generate a description of all cards in the deck."""
-        card_counts = {}
+        card_counts: dict[str, int] = {}
         for card in self.cards:
             card_info = get_card_info(card)
             card_counts[card_info] = card_counts.get(card_info, 0) + 1

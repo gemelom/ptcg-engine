@@ -67,7 +67,7 @@ DAMAGE_COUNTER_MULTIPLIER = 10
 # =============================================================================
 
 # Generator that yields (obs, reward, done, info) and receives ChooseCardAction
-StepGenerator = Generator[tuple["State", float, bool, dict], ChooseCardAction, None]
+StepGenerator = Generator[tuple[dict[str, Any], float, bool, dict], ChooseCardAction, None]
 
 
 # =============================================================================
@@ -130,9 +130,9 @@ def _force_active_replacement(
     tips = "Your active Pokemon is knocked out. You have to choose 1 of your benched Pokemon and switch it to your active spot."
     # source param accepts Player for "who is choosing" context
     actions = choose_card_actions(opponent.id, opponent.id, 1, 1, opponent.bench, tips=tips)
-    chosen_card = yield from reduce_choose_card_actions(actions, state)
-    chosen_card = chosen_card[0]
-    move_pokemon(opponent, chosen_card)
+    chosen_cards = yield from reduce_choose_card_actions(actions, state)
+    chosen_pokemon = cast("PokemonCard", chosen_cards[0])
+    move_pokemon(opponent, chosen_pokemon)
 
     state.turn = original_turn
 
@@ -357,8 +357,8 @@ def reduce_retreat_action(
 
     tips = "You retreated your active Pokemon. You should choose 1 of your benched Pokemon and switch it to your active spot."
     actions = choose_card_actions(player.id, player.id, 1, 1, player.bench, tips=tips)
-    target = yield from reduce_choose_card_actions(actions, state)
-    target = target[0]
+    chosen_targets = yield from reduce_choose_card_actions(actions, state)
+    target = cast("PokemonCard", chosen_targets[0])
 
     trigger_retreat_abilities(action, state)
 
@@ -382,8 +382,8 @@ def reduce_retreat_action(
         ]
         tips = "You retreated your active Pokemon. You should discard some energies attached to it."
         prompt = ChooseCardPrompt(0, len(energy_cards), energy_cards, tips=tips)
-        actions = (available_actions, prompt)
-        chosen_card = yield from reduce_choose_card_actions(actions, state)
+        retreat_actions = (available_actions, prompt)
+        chosen_card = yield from reduce_choose_card_actions(retreat_actions, state)
 
         for card in chosen_card:
             for energy_provide in cast(Any, card).provides:
@@ -525,7 +525,7 @@ def reduce_attach_energy_action(
 def reduce_choose_card_actions(
     actions: tuple[Sequence[ChooseCardAction], ChooseCardPrompt],
     state: State,
-) -> Generator[tuple[State, float, bool, dict], ChooseCardAction, list[Card]]:
+) -> Generator[tuple[dict[str, Any], float, bool, dict], ChooseCardAction, list[Card]]:
     """Reduce a card selection prompt.
 
     This generator pauses execution to let the player choose cards,
@@ -559,7 +559,7 @@ def reduce_choose_card_actions(
 
     obs = state.get_obs(player.id)
     done = False
-    reward = player.reward.calculate_step_reward()
+    reward = cast(float, player.reward.calculate_step_reward())
     info = {
         "is_choosing_card": state.is_choosing_card,
         "raw_available_actions": available_actions,

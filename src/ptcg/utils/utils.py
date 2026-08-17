@@ -43,20 +43,20 @@ def shuffle_cards(cards: list[Card], state: State | None = None) -> None:
 
 def move_cards(
     cards: Card | list[Card] | tuple[Card, ...],
-    source_pos: tuple[PlayerId, CardPosition],
-    target_pos: tuple[PlayerId, CardPosition],
+    source_pos: tuple[PlayerId, CardPosition] | tuple[PlayerId, CardPosition, int],
+    target_pos: tuple[PlayerId, CardPosition] | tuple[PlayerId, CardPosition, int],
     state: State,
 ) -> None:
     """
     move cards among hand/left/prize/discard
     cards are appended to the end of target list in this way
     """
-    source = state.get_area(source_pos)  # type: ignore[arg-type]
-    target = state.get_area(target_pos)  # type: ignore[arg-type]
+    source = cast(list[Card], state.get_area(source_pos))
+    target = cast(list[Card], state.get_area(target_pos))
     if isinstance(cards, (list, tuple)):
         c_cards = list(cards)
         for card in c_cards:
-            source.remove(card)  # type: ignore[union-attr]
+            source.remove(card)
         for card in c_cards:
             card.cardPosition = target_pos[1]
             if isinstance(card, PokemonCard):
@@ -64,10 +64,10 @@ def move_cards(
                     card.position = PokemonPosition.ACTIVE
                 elif target_pos[1] == CardPosition.BENCH:
                     card.position = PokemonPosition.BENCH
-        target.extend(c_cards)  # type: ignore[union-attr]
+        target.extend(c_cards)
     else:
         # print("move_cards", cards)
-        source.remove(cards)  # type: ignore[union-attr]
+        source.remove(cards)
         cards.cardPosition = target_pos[1]
         if isinstance(cards, PokemonCard):
             if target_pos[1] == CardPosition.ACTIVE:
@@ -104,8 +104,8 @@ def move_pokemon(player: Player, pokemon: PokemonCard | list[PokemonCard]) -> No
 
             for idx, card in enumerate(player.active):
                 card.index = idx + 1
-            for idx, card in enumerate(player.bench):
-                card.index = idx + 1
+            for idx, benched_card in enumerate(player.bench):
+                benched_card.index = idx + 1
     except Exception as exc:
         raise ValueError(
             f"Failed to move pokemon {pokemon_card} from position {pokemon_card.position}"
@@ -163,14 +163,14 @@ def discard_pokemon(player: Player, pokemon: PokemonCard | list[PokemonCard]) ->
     except Exception as exc:
         raise ValueError(f"Failed to discard pokemon {pokemon_card}") from exc
 
-    for card in pokemon_card.attachment:
-        item = type(card)()
+    for attached_card in pokemon_card.attachment:
+        item = type(attached_card)()
         item.cardPosition = CardPosition.DISCARD
         player.discard.append(item)
 
     if hasattr(pokemon_card, "evolved"):
-        for card in pokemon_card.evolved:
-            item = type(card)()
+        for evolved_card in pokemon_card.evolved:
+            item = type(evolved_card)()
             item.cardPosition = CardPosition.DISCARD
             player.discard.append(item)
 
@@ -178,8 +178,8 @@ def discard_pokemon(player: Player, pokemon: PokemonCard | list[PokemonCard]) ->
     item.cardPosition = CardPosition.DISCARD
     player.discard.append(item)
 
-    for idx, card in enumerate(player.discard):
-        card.index = idx + 1
+    for idx, discarded_card in enumerate(player.discard):
+        discarded_card.index = idx + 1
 
 
 def discard_card(player: Player, card: Card) -> None:

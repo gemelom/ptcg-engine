@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from ptcg.core.ability import Ability
     from ptcg.core.attack import Attack
     from ptcg.core.card import Card
+    from ptcg.core.player import Player
 
 
 class Action(ABC):
@@ -124,7 +125,7 @@ class UseStadiumAction(Action):
 class RetreatAction(Action):
     active_pokemon: Card
 
-    def __init__(self, playerId: PlayerId, source: Card, active_pokemon: Card) -> None:
+    def __init__(self, playerId: PlayerId, source: Card | Player, active_pokemon: Card) -> None:
         super().__init__(playerId, ActionType.RETREAT_ACTION)
         self.source = source
         self.active_pokemon = active_pokemon
@@ -246,7 +247,7 @@ class DiscardStadiumAction(Action):
 
 
 class PassTurn(Action):
-    def __init__(self, playerId: PlayerId, source: Card) -> None:
+    def __init__(self, playerId: PlayerId, source: Card | Player) -> None:
         super().__init__(playerId, ActionType.PASS_TURN)
         self.source = source
 
@@ -278,14 +279,14 @@ class ChooseCardAction(Action):
         playerId: PlayerId,
         targetId: PlayerId,
         chosen: list[Card],
-        candidates: list[Card],
+        candidates: Sequence[Card],
         indexed: bool = False,
         hidden: bool = False,
     ) -> None:
         super().__init__(playerId, ActionType.CHOOSE_CARD_ACTION)
         self.targetId = targetId
         self.chosen = chosen
-        self.candidates = candidates
+        self.candidates = list(candidates)
         self.indexed = indexed
         self.hidden = hidden
 
@@ -348,7 +349,7 @@ class ChooseCardActionSpace(Sequence[ChooseCardAction]):
         targetId: PlayerId,
         min_cnt: int,
         max_cnt: int,
-        candidates: list[Card],
+        candidates: Sequence[Card],
         *,
         indexed: bool = False,
         hidden: bool = False,
@@ -461,14 +462,14 @@ class ChooseCardPrompt:
         self,
         min_cnt: int,
         max_cnt: int,
-        candidates: list[Card],
+        candidates: Sequence[Card],
         hidden: bool = False,
         tips: str = "",
         source: Card | None = None,
     ) -> None:
         self.min_cnt = min_cnt
         self.max_cnt = max_cnt
-        self.candidates = candidates
+        self.candidates = list(candidates)
         self.hidden = hidden
         self.tips = tips
         self.source = source
@@ -479,7 +480,7 @@ def choose_card_actions(
     targetId: PlayerId,
     min_cnt: int,
     max_cnt: int,
-    candidates: list[Card],
+    candidates: Sequence[Card],
     indexed: bool = False,
     hidden: bool = False,
     tips: str = "",

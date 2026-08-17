@@ -34,7 +34,10 @@ class State:
     termination_reason: str | None = None
     termination_loser: PlayerId | None = None
 
-    def get_area(self, area: tuple[PlayerId, CardPosition, int | None]) -> Sequence[Card]:
+    def get_area(
+        self,
+        area: tuple[PlayerId, CardPosition] | tuple[PlayerId, CardPosition, int],
+    ) -> Sequence[Card]:
         if area[1] == CardPosition.STADIUM:
             return self.stadium
 
@@ -60,11 +63,11 @@ class State:
         elif area[1] == CardPosition.ACTIVE_ATTACHMENT:
             return player.active[0].attachment
         elif area[1] == CardPosition.BENCH_ATTACHMENT:
-            idx = area[2]
-            if idx is None:
+            if len(area) < 3:
                 from ptcg.core.exceptions import InvalidAreaError
 
                 raise InvalidAreaError("Invalid area: bench attachment index is None")
+            idx = area[2]
             return player.bench[idx - 1].attachment
         else:
             from ptcg.core.exceptions import InvalidAreaError
