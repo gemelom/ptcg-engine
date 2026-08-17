@@ -115,4 +115,4 @@ class CRZ045RotomV(PokemonCard):
             yield from reduce_retreat_action(action, state)
 
         else:
-            raise ValueError(f"Invalid action: {action}")
+            raise TypeError(f"Invalid action: {action}")

@@ -113,4 +113,4 @@ class SVI170ElectricGenerator(ItemCard):
             shuffle_cards(player.left, state)
 
         else:
-            raise ValueError(f"Invalid action: {action}")
+            raise TypeError(f"Invalid action: {action}")

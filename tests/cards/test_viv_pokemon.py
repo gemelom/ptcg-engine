@@ -25,7 +25,11 @@ def test_charmeleon_raging_flames_damages_and_discards_top_three():
         PlayerZones(left=[make_card("SVE-008")], prize=[make_card("SVE-007")], active=[defender]),
     )
 
-    attacks = [a for a in charmeleon.get_actions(state) if isinstance(a, AttackAction) and a.attack.name == "Raging Flames"]
+    attacks = [
+        a
+        for a in charmeleon.get_actions(state)
+        if isinstance(a, AttackAction) and a.attack.name == "Raging Flames"
+    ]
     assert len(attacks) == 1
 
     list(charmeleon.reduce_action(attacks[0], state))
@@ -45,7 +49,11 @@ def test_charmeleon_slash_damages_opponent():
         PlayerZones(left=[make_card("SVE-005")], prize=[make_card("SVE-007")], active=[defender]),
     )
 
-    attacks = [a for a in charmeleon.get_actions(state) if isinstance(a, AttackAction) and a.attack.name == "Slash"]
+    attacks = [
+        a
+        for a in charmeleon.get_actions(state)
+        if isinstance(a, AttackAction) and a.attack.name == "Slash"
+    ]
     assert len(attacks) == 1
 
     list(charmeleon.reduce_action(attacks[0], state))

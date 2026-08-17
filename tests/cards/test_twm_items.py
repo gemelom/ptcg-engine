@@ -19,7 +19,7 @@ def test_hyper_aroma_searches_stage1_pokemon_from_deck():
     card = make_card("TWM-152")
     stage1_a = make_card("TWM-129")  # Drakloak - Stage 1
     stage1_b = make_card("TEF-129")  # Dudunsparce - Stage 1
-    basic = make_card("PAF-007")     # Charmander - Basic (not eligible)
+    basic = make_card("PAF-007")  # Charmander - Basic (not eligible)
     state = make_state(PlayerZones(hand=[card], left=[stage1_a, stage1_b, basic]))
 
     actions = card.get_actions(state)
@@ -59,10 +59,10 @@ def test_secret_box_searches_item_tool_supporter_stadium_from_deck():
     discard1 = make_card("SVE-002")
     discard2 = make_card("SVE-004")
     discard3 = make_card("SVE-005")
-    deck_item = make_card("TEF-144")       # Buddy-Buddy Poffin - Item
-    deck_tool = make_card("TEF-151")       # Heavy Baton - Tool
+    deck_item = make_card("TEF-144")  # Buddy-Buddy Poffin - Item
+    deck_tool = make_card("TEF-151")  # Heavy Baton - Tool
     deck_supporter = make_card("TEF-145")  # Ciphermaniac's Codebreaking - Supporter
-    deck_stadium = make_card("BRS-137")    # Collapsed Stadium - Stadium
+    deck_stadium = make_card("BRS-137")  # Collapsed Stadium - Stadium
     state = make_state(
         PlayerZones(
             hand=[card, discard1, discard2, discard3],
@@ -94,7 +94,7 @@ def test_secret_box_searches_item_tool_supporter_stadium_from_deck():
 
 def test_secret_box_unavailable_with_fewer_than_three_other_hand_cards():
     card = make_card("TWM-163")
-    state = make_state(PlayerZones(hand=[card, make_card("SVE-002"), make_card("SVE-004")]))
+    make_state(PlayerZones(hand=[card, make_card("SVE-002"), make_card("SVE-004")]))
     # only 2 other cards, need 3
     state2 = make_state(PlayerZones(hand=[card, make_card("SVE-002")]))
 

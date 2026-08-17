@@ -12,7 +12,11 @@ from ptcg.core.enums import (
     SpecialCondition,
     Stage,
 )
-from ptcg.core.reducer import reduce_attack_action, reduce_evolve_pokemon_action, reduce_play_pokemon_action
+from ptcg.core.reducer import (
+    reduce_attack_action,
+    reduce_evolve_pokemon_action,
+    reduce_play_pokemon_action,
+)
 from ptcg.utils.utils import auto_end_turn, check_energy, opponent_active
 
 
@@ -84,10 +88,9 @@ class LOR143Snorlax(PokemonCard):
 
     def use_ability(self, action, state):
         """Prevent all effects of attacks targeting this Pokémon (not damage)."""
-        if isinstance(action, EffectAction):
-            if action.target == self:
-                action.effect.dc = 0
-                action.effect.specialCondition = None
+        if isinstance(action, EffectAction) and action.target == self:
+            action.effect.dc = 0
+            action.effect.specialCondition = None
 
     def reduce_action(self, action, state):
         if isinstance(action, PlayPokemonAction):

@@ -57,9 +57,8 @@ class BRS041Manaphy(PokemonCard):
         return actions
 
     def use_ability(self, action, state):
-        if isinstance(action, AttackAction):
-            if action.target in opponent_bench(state):
-                action.attack.damage = 0
+        if isinstance(action, AttackAction) and action.target in opponent_bench(state):
+            action.attack.damage = 0
 
     def reduce_action(self, action, state):
         if isinstance(action, PlayPokemonAction):
@@ -73,4 +72,4 @@ class BRS041Manaphy(PokemonCard):
             yield from reduce_retreat_action(action, state)
 
         else:
-            raise ValueError(f"Invalid action: {action}")
+            raise TypeError(f"Invalid action: {action}")

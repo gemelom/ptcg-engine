@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import random
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any
 
 from ptcg.core.card import Card, StadiumCard
 from ptcg.core.enums import CardPosition, PlayerId
@@ -16,24 +17,24 @@ if TYPE_CHECKING:
 class State:
     player1: Player
     player2: Player
-    turn: Optional[PlayerId] = None
+    turn: PlayerId | None = None
     timestep: int = 0
     turn_number: int = 0
     is_choosing_card: bool = False
     end_turn: bool = False
-    stadium: List[StadiumCard] = field(default_factory=list)
-    choose_card_list: List[Card] = field(default_factory=list)
-    actions_buffer: List[Action] = field(default_factory=list)
-    last_turn_opponent_actions: List[Action] = field(default_factory=list)
+    stadium: list[StadiumCard] = field(default_factory=list)
+    choose_card_list: list[Card] = field(default_factory=list)
+    actions_buffer: list[Action] = field(default_factory=list)
+    last_turn_opponent_actions: list[Action] = field(default_factory=list)
     turn_just_switched: bool = False
-    auto_events: List[str] = field(default_factory=list)
-    rng: Optional[random.Random] = field(default=None, repr=False, compare=False)
+    auto_events: list[str] = field(default_factory=list)
+    rng: random.Random | None = field(default=None, repr=False, compare=False)
     invalid_action_policy: str = "raise"
     expose_full_state: bool = False
-    termination_reason: Optional[str] = None
-    termination_loser: Optional[PlayerId] = None
+    termination_reason: str | None = None
+    termination_loser: PlayerId | None = None
 
-    def get_area(self, area: Tuple[PlayerId, CardPosition, Optional[int]]) -> Sequence[Card]:
+    def get_area(self, area: tuple[PlayerId, CardPosition, int | None]) -> Sequence[Card]:
         if area[1] == CardPosition.STADIUM:
             return self.stadium
 
@@ -70,8 +71,8 @@ class State:
 
             raise InvalidAreaError(f"Invalid area: {area}")
 
-    def to_dict(self) -> Dict[str, Any]:
-        result: Dict[str, Any] = {}
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {}
         result["player1"] = self.player1.to_dict()
         result["player2"] = self.player2.to_dict()
         result["stadium"] = [self.stadium[0].to_dict()] if self.stadium else []
@@ -82,7 +83,7 @@ class State:
 
         return result
 
-    def get_obs(self, viewer_id: Optional[PlayerId] = None) -> Dict[str, Any]:
+    def get_obs(self, viewer_id: PlayerId | None = None) -> dict[str, Any]:
         """Return a detached observation from one player's perspective.
 
         Hands are visible only to their owner. Deck and Prize identities stay
@@ -110,7 +111,7 @@ class State:
         }
 
     @staticmethod
-    def _player_observation(player: Player, *, reveal_hand: bool) -> Dict[str, Any]:
+    def _player_observation(player: Player, *, reveal_hand: bool) -> dict[str, Any]:
         return {
             "id": player.id.name.lower(),
             "active": [card.to_dict() for card in player.active],
@@ -123,8 +124,8 @@ class State:
             "lost_zone": [card.to_dict() for card in player.lostZone],
         }
 
-    def get_opponent_actions_buffer(self) -> List[Action]:
-        opponent_actions: List[Action] = []
+    def get_opponent_actions_buffer(self) -> list[Action]:
+        opponent_actions: list[Action] = []
         for action in self.actions_buffer[::-1]:
             if action.playerId != self.turn:
                 opponent_actions.append(action)

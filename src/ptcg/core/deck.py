@@ -28,13 +28,13 @@ class Deck:
         limited_names = Counter(
             card.name
             for card in self.cards
-            if not (
-                isinstance(card, EnergyCard) and card.energyType == EnergyType.BASIC
-            )
+            if not (isinstance(card, EnergyCard) and card.energyType == EnergyType.BASIC)
         )
         for name, count in sorted(limited_names.items()):
             if count > 4:
-                errors.append(f"{name} has {count} copies; at most 4 cards with one name are allowed")
+                errors.append(
+                    f"{name} has {count} copies; at most 4 cards with one name are allowed"
+                )
 
         return errors
 

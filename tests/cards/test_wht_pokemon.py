@@ -23,7 +23,11 @@ def test_frillish_slap_damages_opponent():
         PlayerZones(left=[make_card("SVE-005")], prize=[make_card("SVE-007")], active=[defender]),
     )
 
-    attacks = [a for a in frillish.get_actions(state) if isinstance(a, AttackAction) and a.attack.name == "Slap"]
+    attacks = [
+        a
+        for a in frillish.get_actions(state)
+        if isinstance(a, AttackAction) and a.attack.name == "Slap"
+    ]
     assert len(attacks) == 1
 
     list(frillish.reduce_action(attacks[0], state))
@@ -41,7 +45,11 @@ def test_frillish_oceanic_gloom_damages_opponent():
         PlayerZones(left=[make_card("SVE-005")], prize=[make_card("SVE-007")], active=[defender]),
     )
 
-    attacks = [a for a in frillish.get_actions(state) if isinstance(a, AttackAction) and a.attack.name == "Oceanic Gloom"]
+    attacks = [
+        a
+        for a in frillish.get_actions(state)
+        if isinstance(a, AttackAction) and a.attack.name == "Oceanic Gloom"
+    ]
     assert len(attacks) == 1
 
     list(frillish.reduce_action(attacks[0], state))

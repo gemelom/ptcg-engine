@@ -8,8 +8,8 @@ during game actions, eliminating code duplication across reducer functions.
 from ptcg.core.ability import PassiveAbility
 from ptcg.core.enums import AbilityTrigger
 from ptcg.utils.utils import (
-    current_all_pokemon,
     current_active,
+    current_all_pokemon,
     current_player,
     is_active_ability_suppressed,
     opponent_all_pokemon,

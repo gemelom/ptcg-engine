@@ -1,7 +1,6 @@
 import pytest
 
-from ptcg.core.action import UseItemAction
-from ptcg.core.action import UseSupporterAction
+from ptcg.core.action import UseItemAction, UseSupporterAction
 from ptcg.core.enums import CardPosition, PokemonPosition
 from tests.helpers.cards import make_card
 from tests.helpers.generator_driver import drive_choices
@@ -107,7 +106,9 @@ def test_ultra_ball_is_unavailable_without_two_other_hand_cards():
 
 
 @pytest.mark.card("PAF-087")
-@pytest.mark.card_coverage("PAF-087", "get_actions", "reduce_action", "negative_case", "zone_change")
+@pytest.mark.card_coverage(
+    "PAF-087", "get_actions", "reduce_action", "negative_case", "zone_change"
+)
 def test_professors_research_discards_hand_and_draws_seven_cards():
     professors_research = make_card("PAF-087")
     fire_energy = make_card("SVE-002")
@@ -151,7 +152,9 @@ def test_professors_research_is_unavailable_after_supporter_played():
 
 
 @pytest.mark.card("PAF-080")
-@pytest.mark.card_coverage("PAF-080", "get_actions", "reduce_action", "negative_case", "zone_change")
+@pytest.mark.card_coverage(
+    "PAF-080", "get_actions", "reduce_action", "negative_case", "zone_change"
+)
 def test_iono_shuffles_hands_into_decks_and_draws_for_remaining_prizes():
     iono = make_card("PAF-080")
     player_hand_card = make_card("SVE-002")

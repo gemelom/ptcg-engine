@@ -80,9 +80,12 @@ class TWM200DragapultEX(PokemonCard):
         return actions
 
     def use_ability(self, action, state):
-        if isinstance(action, AttackAction):
-            if self.position == PokemonPosition.BENCH and action.target == self:
-                action.attack.damage = 0
+        if (
+            isinstance(action, AttackAction)
+            and self.position == PokemonPosition.BENCH
+            and action.target == self
+        ):
+            action.attack.damage = 0
 
     def reduce_action(self, action, state):
         if isinstance(action, EvolvePokemonAction):

@@ -117,7 +117,7 @@ class SIT138LugiaV(PokemonCard):
             yield from reduce_retreat_action(action, state)
 
         else:
-            raise ValueError(f"Invalid action: {action}")
+            raise TypeError(f"Invalid action: {action}")
 
     def _read_ahead_attack(self, action, state):
         player = current_player(state)

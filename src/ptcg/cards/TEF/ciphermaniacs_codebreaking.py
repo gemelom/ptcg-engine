@@ -21,10 +21,8 @@ class TEF145CiphermaniacsCodebreaking(SupporterCard):
         actions = []
 
         # Can use if no supporter played this turn and not first turn
-        if not player.supporterPlayedTurn and not player.firstTurn:
-            # Can use if at least 2 cards in deck (to search 2)
-            if len(player.left) >= 2:
-                actions.append(UseSupporterAction(state.turn, self))
+        if not player.supporterPlayedTurn and not player.firstTurn and len(player.left) >= 2:
+            actions.append(UseSupporterAction(state.turn, self))
 
         return actions
 

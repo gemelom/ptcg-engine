@@ -12,7 +12,8 @@ Generator Pattern:
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Any, Generator, List, Sequence, Tuple, cast
+from collections.abc import Generator, Sequence
+from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 
@@ -66,7 +67,7 @@ DAMAGE_COUNTER_MULTIPLIER = 10
 # =============================================================================
 
 # Generator that yields (obs, reward, done, info) and receives ChooseCardAction
-StepGenerator = Generator[Tuple["State", float, bool, dict], ChooseCardAction, None]
+StepGenerator = Generator[tuple["State", float, bool, dict], ChooseCardAction, None]
 
 
 # =============================================================================
@@ -75,7 +76,7 @@ StepGenerator = Generator[Tuple["State", float, bool, dict], ChooseCardAction, N
 
 
 def _calculate_damage(
-    source: "PokemonCard", target: "PokemonCard", base_damage: int, state: "State"
+    source: PokemonCard, target: PokemonCard, base_damage: int, state: State
 ) -> int:
     """Calculate damage after applying weakness and resistance.
 
@@ -103,9 +104,9 @@ def _calculate_damage(
 
 
 def _force_active_replacement(
-    opponent: "Player",
-    state: "State",
-    original_turn: "PlayerId",
+    opponent: Player,
+    state: State,
+    original_turn: PlayerId,
 ) -> StepGenerator:
     """Force opponent to choose a new active Pokemon from bench.
 
@@ -137,10 +138,10 @@ def _force_active_replacement(
 
 
 def _handle_knockout(
-    target: "PokemonCard",
-    attacker: "Player",
-    opponent: "Player",
-    state: "State",
+    target: PokemonCard,
+    attacker: Player,
+    opponent: Player,
+    state: State,
 ) -> StepGenerator:
     """Handle Pokemon knockout: discard, prize selection, and replacement.
 
@@ -219,8 +220,8 @@ def _handle_knockout(
 
 
 def reduce_attack_action(
-    action: "AttackAction",
-    state: "State",
+    action: AttackAction,
+    state: State,
     auto_end_turn: bool = True,
 ) -> StepGenerator:
     """Reduce an attack action.
@@ -243,8 +244,8 @@ def reduce_attack_action(
 
 
 def reduce_attack_damage(
-    action: "AttackAction",
-    state: "State",
+    action: AttackAction,
+    state: State,
     *,
     apply_weakness_resistance: bool = True,
 ) -> StepGenerator:
@@ -274,9 +275,10 @@ def reduce_attack_damage(
     else:
         yield from _handle_knockout(target, player, opponent, state)
 
+
 def reduce_effect_action(
     action: EffectAction,
-    state: "State",
+    state: State,
 ) -> StepGenerator:
     """Reduce an effect action (e.g., damage counters from abilities).
 
@@ -305,7 +307,7 @@ def reduce_effect_action(
         yield from _handle_knockout(target, player, opponent, state)
 
 
-def reduce_use_ability_action(action, state: "State") -> None:
+def reduce_use_ability_action(action, state: State) -> None:
     """Reduce an ability usage action.
 
     Args:
@@ -318,7 +320,7 @@ def reduce_use_ability_action(action, state: "State") -> None:
     raise NotImplementedError("Ability action reduction not yet implemented")
 
 
-def reduce_use_stadium_action(action, state: "State") -> None:
+def reduce_use_stadium_action(action, state: State) -> None:
     """Reduce a stadium usage action.
 
     Args:
@@ -333,7 +335,7 @@ def reduce_use_stadium_action(action, state: "State") -> None:
 
 def reduce_retreat_action(
     action: RetreatAction,
-    state: "State",
+    state: State,
 ) -> StepGenerator:
     """Reduce a retreat action.
 
@@ -368,12 +370,12 @@ def reduce_retreat_action(
             card for card in current_active_pokemon.attachment if card.superType == SuperType.ENERGY
         ]
         # Cast to EnergyCard list for retreat_combinations (we filtered by ENERGY superType)
-        energy_cards_as_energy = cast(List["EnergyCard"], energy_cards)
+        energy_cards_as_energy = cast(list["EnergyCard"], energy_cards)
         available_actions = [
             ChooseCardAction(
                 player.id,
                 player.id,
-                cast(List["Card"], combo),  # EnergyCard is subclass of Card
+                cast(list["Card"], combo),  # EnergyCard is subclass of Card
                 energy_cards,
             )
             for combo in retreat_combinations(energy_cards_as_energy, retreat_cnt)
@@ -399,7 +401,7 @@ def reduce_retreat_action(
 
 def reduce_play_pokemon_action(
     action: PlayPokemonAction,
-    state: "State",
+    state: State,
 ) -> None:
     """Reduce a play Pokemon action.
 
@@ -445,7 +447,7 @@ def reduce_play_pokemon_action(
 
 def reduce_evolve_pokemon_action(
     action: EvolvePokemonAction,
-    state: "State",
+    state: State,
 ) -> None:
     """Reduce an evolve Pokemon action.
 
@@ -483,7 +485,7 @@ def reduce_evolve_pokemon_action(
 
 def reduce_attach_energy_action(
     action: AttachEnergyAction,
-    state: "State",
+    state: State,
 ) -> None:
     """Reduce an attach energy action.
 
@@ -521,9 +523,9 @@ def reduce_attach_energy_action(
 
 
 def reduce_choose_card_actions(
-    actions: Tuple[Sequence[ChooseCardAction], ChooseCardPrompt],
-    state: "State",
-) -> Generator[Tuple["State", float, bool, dict], ChooseCardAction, List["Card"]]:
+    actions: tuple[Sequence[ChooseCardAction], ChooseCardPrompt],
+    state: State,
+) -> Generator[tuple[State, float, bool, dict], ChooseCardAction, list[Card]]:
     """Reduce a card selection prompt.
 
     This generator pauses execution to let the player choose cards,

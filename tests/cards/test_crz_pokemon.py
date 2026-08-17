@@ -143,7 +143,9 @@ def test_bidoof_hyper_fang_unavailable_without_two_energy():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[bidoof]), PlayerZones(active=[defender]))
 
-    assert [action for action in bidoof.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in bidoof.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
 
 
 def test_bidoof_carefree_countenance_zeroes_damage_when_targeted_on_bench():
@@ -212,4 +214,6 @@ def test_radiant_charizard_combustion_blast_unavailable_when_used_last_turn():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[charizard]), PlayerZones(active=[defender]))
 
-    assert [action for action in charizard.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in charizard.get_actions(state) if isinstance(action, AttackAction)
+    ] == []

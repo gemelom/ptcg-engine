@@ -7,14 +7,21 @@ from ptcg.core.action import (
 )
 from ptcg.core.attack import Attack
 from ptcg.core.card import PokemonCard
-from ptcg.core.enums import AbilityType, CardType, PokemonPosition, PokemonRule, PokemonType, Stage
+from ptcg.core.enums import (
+    AbilityType,
+    CardPosition,
+    CardType,
+    PokemonPosition,
+    PokemonRule,
+    PokemonType,
+    Stage,
+)
 from ptcg.core.reducer import (
     reduce_attack_action,
     reduce_choose_card_actions,
     reduce_evolve_pokemon_action,
 )
 from ptcg.utils.utils import check_energy, current_player, move_cards, opponent_active
-from ptcg.core.enums import CardPosition
 
 
 class SIT068Kirlia(PokemonCard):

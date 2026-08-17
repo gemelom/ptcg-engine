@@ -40,7 +40,9 @@ def test_raikou_v_fleet_footed_unavailable_from_bench():
     state = make_state(PlayerZones(bench=[raikou]))
     state.player1.onceUsedTurn["Fleet-Footed"] = False
 
-    assert [action for action in raikou.get_actions(state) if isinstance(action, UseAbilityAction)] == []
+    assert [
+        action for action in raikou.get_actions(state) if isinstance(action, UseAbilityAction)
+    ] == []
 
 
 def test_raikou_v_lightning_rondo_adds_damage_for_each_benched_pokemon():
@@ -125,7 +127,9 @@ def test_bibarel_industrious_incisors_unavailable_after_use():
     state = make_state(PlayerZones(active=[bibarel]))
     state.player1.onceUsedTurn["Industrious Incisors"] = True
 
-    assert [action for action in bibarel.get_actions(state) if isinstance(action, UseAbilityAction)] == []
+    assert [
+        action for action in bibarel.get_actions(state) if isinstance(action, UseAbilityAction)
+    ] == []
 
 
 @pytest.mark.card("BRS-041")
@@ -168,7 +172,9 @@ def test_manaphy_rain_splash_unavailable_without_water_energy():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[manaphy]), PlayerZones(active=[defender]))
 
-    assert [action for action in manaphy.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in manaphy.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
 
 
 def test_manaphy_wave_veil_zeroes_attack_damage_to_own_benched_pokemon():
@@ -248,7 +254,9 @@ def test_minccino_attacks_are_unavailable_without_energy():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[minccino]), PlayerZones(active=[defender]))
 
-    assert [action for action in minccino.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in minccino.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
 
 
 @pytest.mark.card("BRS-158")
@@ -403,7 +411,9 @@ def test_lumineon_v_aqua_return_action_requires_energy_and_benched_pokemon():
     lumineon.energy = [CardType.WATER, CardType.COLORLESS, CardType.COLORLESS]
     defender = make_card("PAF-054")
     bench_pokemon = make_card("PAF-007")
-    state = make_state(PlayerZones(active=[lumineon], bench=[bench_pokemon]), PlayerZones(active=[defender]))
+    state = make_state(
+        PlayerZones(active=[lumineon], bench=[bench_pokemon]), PlayerZones(active=[defender])
+    )
 
     actions = lumineon.get_actions(state)
 
@@ -418,4 +428,6 @@ def test_lumineon_v_aqua_return_unavailable_without_benched_pokemon():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[lumineon]), PlayerZones(active=[defender]))
 
-    assert [action for action in lumineon.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in lumineon.get_actions(state) if isinstance(action, AttackAction)
+    ] == []

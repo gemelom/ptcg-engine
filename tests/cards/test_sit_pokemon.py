@@ -337,7 +337,7 @@ def test_archeops_primal_turbo_attaches_special_energy_to_pokemon():
     archeops = make_card("SIT-147")
     special1 = make_card("BRS-151")  # Double Turbo Energy
     special2 = make_card("SIT-169")  # V Guard Energy
-    benched = make_card("BRS-124")   # Minccino
+    benched = make_card("BRS-124")  # Minccino
     state = make_state(
         PlayerZones(
             left=[special1, special2],
@@ -379,9 +379,7 @@ def test_archeops_primal_turbo_unavailable_without_special_energy_in_deck():
 
 def test_archeops_primal_turbo_unavailable_after_use():
     archeops = make_card("SIT-147")
-    state = make_state(
-        PlayerZones(left=[make_card("BRS-151")], active=[archeops])
-    )
+    state = make_state(PlayerZones(left=[make_card("BRS-151")], active=[archeops]))
     state.player1.onceUsedTurn["Primal Turbo"] = True
 
     assert [a for a in archeops.get_actions(state) if isinstance(a, UseAbilityAction)] == []

@@ -93,9 +93,7 @@ class ASR046RadiantGreninja(PokemonCard):
 
         # If in active position, check if can attack
         if self.position == PokemonPosition.ACTIVE:
-            attached_energy = [
-                card for card in self.attachment if isinstance(card, EnergyCard)
-            ]
+            attached_energy = [card for card in self.attachment if isinstance(card, EnergyCard)]
             for attack in self.attacks:
                 if check_energy(attack.cost, self.energy) and len(attached_energy) >= 2:
                     targets = opponent_active(state)
@@ -127,11 +125,7 @@ class ASR046RadiantGreninja(PokemonCard):
         player = current_player(state)
 
         # Concealed Cards can discard any Energy card, including Special Energy.
-        energy_cards = [
-            card
-            for card in player.hand
-            if card.superType == SuperType.ENERGY
-        ]
+        energy_cards = [card for card in player.hand if card.superType == SuperType.ENERGY]
 
         if energy_cards:
             actions = choose_card_actions(

@@ -62,7 +62,9 @@ def test_pidgey_attacks_are_unavailable_without_energy():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[pidgey]), PlayerZones(active=[defender]))
 
-    assert [action for action in pidgey.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in pidgey.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
 
 
 @pytest.mark.card("MEW-017")
@@ -104,7 +106,9 @@ def test_pidgeotto_flap_unavailable_without_energy():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[pidgeotto]), PlayerZones(active=[defender]))
 
-    assert [action for action in pidgeotto.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in pidgeotto.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
 
 
 @pytest.mark.card("MEW-123")
@@ -160,7 +164,9 @@ def test_scyther_attacks_are_unavailable_without_energy():
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[scyther]), PlayerZones(active=[defender]))
 
-    assert [action for action in scyther.get_actions(state) if isinstance(action, AttackAction)] == []
+    assert [
+        action for action in scyther.get_actions(state) if isinstance(action, AttackAction)
+    ] == []
 
 
 @pytest.mark.card("MEW-151")
@@ -234,4 +240,6 @@ def test_mew_ex_restart_unavailable_after_use():
     state = make_state(PlayerZones(active=[mew]))
     state.player1.onceUsedTurn["Restart"] = True
 
-    assert [action for action in mew.get_actions(state) if isinstance(action, UseAbilityAction)] == []
+    assert [
+        action for action in mew.get_actions(state) if isinstance(action, UseAbilityAction)
+    ] == []

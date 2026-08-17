@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterator, Sequence
 from copy import deepcopy
 from math import comb
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, overload
+from typing import TYPE_CHECKING, Any, overload
 
 from ptcg.core.enums import ActionType, CardPosition, PlayerId, PokemonPosition
 
@@ -41,8 +41,8 @@ class Action(ABC):
     def to_nl(self) -> str:
         pass
 
-    def to_dict(self) -> Dict[str, Any]:
-        result: Dict[str, Any] = {}
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {}
         result["playerId"] = f"{self.playerId}"
         result["actionType"] = self.__class__.__name__
 
@@ -52,7 +52,7 @@ class Action(ABC):
         result.update(self._extra_dict())
         return result
 
-    def _extra_dict(self) -> Dict[str, Any]:
+    def _extra_dict(self) -> dict[str, Any]:
         """Override in subclasses to add extra serialization fields."""
         return {}
 
@@ -74,7 +74,7 @@ class AttackAction(Action):
     def to_nl(self) -> str:
         return f"{self._player_str()}'s [{self.source.name}] attacked [{self.target.name}] with [{self.attack.name}] for {self.attack.damage} damage"
 
-    def _extra_dict(self) -> Dict[str, Any]:
+    def _extra_dict(self) -> dict[str, Any]:
         return {
             "target": self.target.name,
             "attack": {"name": self.attack.name, "damage": self.attack.damage},
@@ -108,7 +108,7 @@ class UseAbilityAction(Action):
     def to_nl(self) -> str:
         return f"{self._player_str()} used [{self.source.name}]'s ability [{self.ability.name}]"
 
-    def _extra_dict(self) -> Dict[str, Any]:
+    def _extra_dict(self) -> dict[str, Any]:
         return {"ability": self.ability.name}
 
 
@@ -153,7 +153,7 @@ class PlayPokemonAction(Action):
         }.get(self.position, "Unknown")
         return f"{self._player_str()} played [{self.source.name}] to {position_str}"
 
-    def _extra_dict(self) -> Dict[str, Any]:
+    def _extra_dict(self) -> dict[str, Any]:
         return {"position": str(self.position)}
 
 
@@ -190,7 +190,7 @@ class AttachEnergyAction(Action):
     def to_nl(self) -> str:
         return f"{self._player_str()} attached [{self.source.name}] to [{self.target.name}]"
 
-    def _extra_dict(self) -> Dict[str, Any]:
+    def _extra_dict(self) -> dict[str, Any]:
         return {"target": self.target.name if hasattr(self.target, "name") else str(self.target)}
 
 
@@ -223,7 +223,7 @@ class UseToolAction(Action):
     def to_nl(self) -> str:
         return f"{self._player_str()} attached [{self.source.name}] to [{self.target.name}]"
 
-    def _extra_dict(self) -> Dict[str, Any]:
+    def _extra_dict(self) -> dict[str, Any]:
         return {"target": self.target.name if hasattr(self.target, "name") else str(self.target)}
 
 
@@ -268,8 +268,8 @@ class ChooseCardAction(Action):
     """
 
     targetId: PlayerId
-    chosen: List[Card]
-    candidates: List[Card]
+    chosen: list[Card]
+    candidates: list[Card]
     indexed: bool
     hidden: bool
 
@@ -277,8 +277,8 @@ class ChooseCardAction(Action):
         self,
         playerId: PlayerId,
         targetId: PlayerId,
-        chosen: List[Card],
-        candidates: List[Card],
+        chosen: list[Card],
+        candidates: list[Card],
         indexed: bool = False,
         hidden: bool = False,
     ) -> None:
@@ -314,7 +314,7 @@ class ChooseCardAction(Action):
         ]
         return len(same_name_field_candidates) > 1
 
-    def _extra_dict(self) -> Dict[str, Any]:
+    def _extra_dict(self) -> dict[str, Any]:
         if self.hidden:
             return {
                 "chosen": [f"Hidden Card #{i + 1}" for i in range(len(self.chosen))],
@@ -325,14 +325,14 @@ class ChooseCardAction(Action):
             "candidates": [card.name for card in self.candidates],
         }
 
-    def choose_card_indices(self) -> List[int]:
-        card_indices: List[int] = []
+    def choose_card_indices(self) -> list[int]:
+        card_indices: list[int] = []
         for card in self.chosen:
             card_indices.append(self.candidates.index(card))
         return card_indices
 
-    def choose_field_indices(self) -> List[int]:
-        card_indices: List[int] = []
+    def choose_field_indices(self) -> list[int]:
+        card_indices: list[int] = []
         for card in self.chosen:
             if getattr(card, "cardPosition", None) in (CardPosition.ACTIVE, CardPosition.BENCH):
                 card_indices.append(card.index)
@@ -348,15 +348,13 @@ class ChooseCardActionSpace(Sequence[ChooseCardAction]):
         targetId: PlayerId,
         min_cnt: int,
         max_cnt: int,
-        candidates: List[Card],
+        candidates: list[Card],
         *,
         indexed: bool = False,
         hidden: bool = False,
     ) -> None:
         if min_cnt < 0 or max_cnt < min_cnt:
-            raise ValueError(
-                f"Invalid choice bounds: min_cnt={min_cnt}, max_cnt={max_cnt}"
-            )
+            raise ValueError(f"Invalid choice bounds: min_cnt={min_cnt}, max_cnt={max_cnt}")
         self.playerId = playerId
         self.targetId = targetId
         self.min_cnt = min_cnt
@@ -364,12 +362,8 @@ class ChooseCardActionSpace(Sequence[ChooseCardAction]):
         self.candidates = list(candidates)
         self.indexed = indexed
         self.hidden = hidden
-        self._selection_counts = tuple(
-            range(min_cnt, min(max_cnt, len(self.candidates)) + 1)
-        )
-        self._size = sum(
-            comb(len(self.candidates), count) for count in self._selection_counts
-        )
+        self._selection_counts = tuple(range(min_cnt, min(max_cnt, len(self.candidates)) + 1))
+        self._size = sum(comb(len(self.candidates), count) for count in self._selection_counts)
 
     def __len__(self) -> int:
         return self._size
@@ -383,9 +377,9 @@ class ChooseCardActionSpace(Sequence[ChooseCardAction]):
     def __getitem__(self, index: int) -> ChooseCardAction: ...
 
     @overload
-    def __getitem__(self, index: slice) -> List[ChooseCardAction]: ...
+    def __getitem__(self, index: slice) -> list[ChooseCardAction]: ...
 
-    def __getitem__(self, index: int | slice) -> ChooseCardAction | List[ChooseCardAction]:
+    def __getitem__(self, index: int | slice) -> ChooseCardAction | list[ChooseCardAction]:
         if isinstance(index, slice):
             return [self[position] for position in range(*index.indices(len(self)))]
 
@@ -398,9 +392,7 @@ class ChooseCardActionSpace(Sequence[ChooseCardAction]):
             bucket_size = comb(len(self.candidates), count)
             if index < bucket_size:
                 chosen_indices = self._unrank_combination(count, index)
-                return self._make_action(
-                    [self.candidates[position] for position in chosen_indices]
-                )
+                return self._make_action([self.candidates[position] for position in chosen_indices])
             index -= bucket_size
         raise IndexError("choice action index out of range")
 
@@ -430,7 +422,7 @@ class ChooseCardActionSpace(Sequence[ChooseCardAction]):
             chosen_positions
         )
 
-    def _make_action(self, chosen: List[Card]) -> ChooseCardAction:
+    def _make_action(self, chosen: list[Card]) -> ChooseCardAction:
         return ChooseCardAction(
             self.playerId,
             self.targetId,
@@ -440,9 +432,9 @@ class ChooseCardActionSpace(Sequence[ChooseCardAction]):
             hidden=self.hidden,
         )
 
-    def _unrank_combination(self, count: int, rank: int) -> List[int]:
+    def _unrank_combination(self, count: int, rank: int) -> list[int]:
         """Return the indices of the lexicographically ranked combination."""
-        result: List[int] = []
+        result: list[int] = []
         start = 0
         total_candidates = len(self.candidates)
         for position in range(count):
@@ -460,19 +452,19 @@ class ChooseCardActionSpace(Sequence[ChooseCardAction]):
 class ChooseCardPrompt:
     min_cnt: int
     max_cnt: int
-    candidates: List[Card]
+    candidates: list[Card]
     hidden: bool
     tips: str
-    source: Optional[Card]
+    source: Card | None
 
     def __init__(
         self,
         min_cnt: int,
         max_cnt: int,
-        candidates: List[Card],
+        candidates: list[Card],
         hidden: bool = False,
         tips: str = "",
-        source: Optional[Card] = None,
+        source: Card | None = None,
     ) -> None:
         self.min_cnt = min_cnt
         self.max_cnt = max_cnt
@@ -487,12 +479,12 @@ def choose_card_actions(
     targetId: PlayerId,
     min_cnt: int,
     max_cnt: int,
-    candidates: List[Card],
+    candidates: list[Card],
     indexed: bool = False,
     hidden: bool = False,
     tips: str = "",
-    source: Optional[Card] = None,
-) -> Tuple[ChooseCardActionSpace, ChooseCardPrompt]:
+    source: Card | None = None,
+) -> tuple[ChooseCardActionSpace, ChooseCardPrompt]:
     """
     Generate all possible ChooseCardAction combinations.
 

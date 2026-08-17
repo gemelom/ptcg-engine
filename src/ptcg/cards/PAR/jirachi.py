@@ -116,4 +116,4 @@ class PAR126Jirachi(PokemonCard):
             auto_end_turn(state)
 
         else:
-            raise ValueError(f"Invalid action: {action}")
+            raise TypeError(f"Invalid action: {action}")

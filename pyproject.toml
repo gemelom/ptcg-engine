@@ -50,6 +50,7 @@ markers = [
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["**/AGENTS.md"]
 
 [tool.ruff.lint]
 ignore = ["F403", "F405", "F541"]

@@ -1,5 +1,3 @@
-from typing import List
-
 from ptcg.core.enums import (
     CardType,
 )
@@ -8,7 +6,7 @@ from ptcg.core.enums import (
 class Attack:
     name: str
     damage: int
-    cost: List[CardType]
+    cost: list[CardType]
     text: str
 
     def __init__(self, attributes):

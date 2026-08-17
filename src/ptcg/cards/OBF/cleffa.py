@@ -74,4 +74,4 @@ class OBF080Cleffa(PokemonCard):
             yield from reduce_retreat_action(action, state)
 
         else:
-            raise ValueError(f"Invalid action: {action}")
+            raise TypeError(f"Invalid action: {action}")

@@ -1,8 +1,8 @@
-import pytest
 from unittest.mock import patch
 
+import pytest
+
 from ptcg.core.action import UseItemAction
-from ptcg.core.enums import Coin
 from tests.helpers.cards import make_card
 from tests.helpers.generator_driver import drive_choices
 from tests.helpers.state_builder import PlayerZones, make_state
@@ -19,8 +19,8 @@ from tests.helpers.state_builder import PlayerZones, make_state
 )
 def test_capturing_aroma_heads_searches_evolution_pokemon():
     card = make_card("SIT-153")
-    evolution = make_card("PAF-008")   # Charmeleon - Stage 1
-    basic = make_card("PAF-007")       # Charmander - Basic
+    evolution = make_card("PAF-008")  # Charmeleon - Stage 1
+    basic = make_card("PAF-007")  # Charmander - Basic
     state = make_state(PlayerZones(hand=[card], left=[evolution, basic]))
 
     actions = card.get_actions(state)
@@ -41,8 +41,8 @@ def test_capturing_aroma_heads_searches_evolution_pokemon():
 
 def test_capturing_aroma_tails_searches_basic_pokemon():
     card = make_card("SIT-153")
-    evolution = make_card("PAF-008")   # Charmeleon - Stage 1
-    basic = make_card("PAF-007")       # Charmander - Basic
+    evolution = make_card("PAF-008")  # Charmeleon - Stage 1
+    basic = make_card("PAF-007")  # Charmander - Basic
     state = make_state(PlayerZones(hand=[card], left=[evolution, basic]))
 
     with patch("ptcg.utils.utils.random.randint", return_value=1):  # TAIL

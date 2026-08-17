@@ -118,7 +118,7 @@ class PAR248IronHandsEX(PokemonCard):
         # passive ability
         if (
             hasattr(action.source, "ability")
-            and isinstance(getattr(action.source, "ability"), PassiveAbility)
+            and isinstance(action.source.ability, PassiveAbility)
             and action.source.ability.abilityTrigger == AbilityTrigger.ATTACKING
         ):
             action.source.use_ability(action, state)
@@ -126,7 +126,7 @@ class PAR248IronHandsEX(PokemonCard):
         for card in state.stadium:
             if (
                 hasattr(card, "ability")
-                and isinstance(getattr(card, "ability"), PassiveAbility)
+                and isinstance(card.ability, PassiveAbility)
                 and card.ability.abilityTrigger == AbilityTrigger.ATTACKING
             ):
                 card.use_ability(action, state)

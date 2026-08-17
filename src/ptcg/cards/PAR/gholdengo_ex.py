@@ -1,5 +1,10 @@
 from ptcg.core.ability import ActiveAbility
-from ptcg.core.action import AttackAction, EvolvePokemonAction, UseAbilityAction, choose_card_actions
+from ptcg.core.action import (
+    AttackAction,
+    EvolvePokemonAction,
+    UseAbilityAction,
+    choose_card_actions,
+)
 from ptcg.core.attack import Attack
 from ptcg.core.card import PokemonCard
 from ptcg.core.enums import (
@@ -13,7 +18,11 @@ from ptcg.core.enums import (
     Stage,
     SuperType,
 )
-from ptcg.core.reducer import reduce_attack_action, reduce_choose_card_actions, reduce_evolve_pokemon_action
+from ptcg.core.reducer import (
+    reduce_attack_action,
+    reduce_choose_card_actions,
+    reduce_evolve_pokemon_action,
+)
 from ptcg.utils.utils import (
     check_energy,
     current_player,

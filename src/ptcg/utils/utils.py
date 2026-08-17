@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, cast
 
 from ptcg.core.ability import ActiveAbility
 from ptcg.core.card import Card, EnergyCard, PokemonCard
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from ptcg.core.state import State
 
 
-def flip_coin(state: Optional["State"] = None) -> Coin:
+def flip_coin(state: State | None = None) -> Coin:
     rng = state.rng if state is not None and state.rng is not None else random
     if rng.randint(0, 1) == 0:
         result = Coin.HEAD
@@ -34,7 +34,7 @@ def flip_coin(state: Optional["State"] = None) -> Coin:
     return result
 
 
-def shuffle_cards(cards: List[Card], state: Optional["State"] = None) -> None:
+def shuffle_cards(cards: list[Card], state: State | None = None) -> None:
     rng = state.rng if state is not None and state.rng is not None else random
     rng.shuffle(cards)
     for idx, card in enumerate(cards):
@@ -42,9 +42,9 @@ def shuffle_cards(cards: List[Card], state: Optional["State"] = None) -> None:
 
 
 def move_cards(
-    cards: Union[Card, List[Card], Tuple[Card, ...]],
-    source_pos: Tuple[PlayerId, CardPosition],
-    target_pos: Tuple[PlayerId, CardPosition],
+    cards: Card | list[Card] | tuple[Card, ...],
+    source_pos: tuple[PlayerId, CardPosition],
+    target_pos: tuple[PlayerId, CardPosition],
     state: State,
 ) -> None:
     """
@@ -53,12 +53,8 @@ def move_cards(
     """
     source = state.get_area(source_pos)  # type: ignore[arg-type]
     target = state.get_area(target_pos)  # type: ignore[arg-type]
-    c_cards: List[Card] = []
-
-    if isinstance(cards, list) or isinstance(cards, tuple):
-        cards_list = cast(List[Card], cards)
-        for card in cards_list:
-            c_cards.append(card)
+    if isinstance(cards, (list, tuple)):
+        c_cards = list(cards)
         for card in c_cards:
             source.remove(card)  # type: ignore[union-attr]
         for card in c_cards:
@@ -86,12 +82,12 @@ def move_cards(
         card.index = idx + 1
 
 
-def move_pokemon(player: Player, pokemon: Union[PokemonCard, List[PokemonCard]]) -> None:
+def move_pokemon(player: Player, pokemon: PokemonCard | list[PokemonCard]) -> None:
     """
     move pokemon between bench and target
     """
     pokemon_card: PokemonCard = (
-        cast(List[PokemonCard], pokemon)[0] if isinstance(pokemon, list) else pokemon
+        cast(list[PokemonCard], pokemon)[0] if isinstance(pokemon, list) else pokemon
     )
 
     try:
@@ -149,12 +145,12 @@ def switch_pokemon(pokemon1: PokemonCard, pokemon2: PokemonCard, player: Player)
         ) from exc
 
 
-def discard_pokemon(player: Player, pokemon: Union[PokemonCard, List[PokemonCard]]) -> None:
+def discard_pokemon(player: Player, pokemon: PokemonCard | list[PokemonCard]) -> None:
     """
     discard pokemon and all its attachment to discard
     """
     pokemon_card: PokemonCard = (
-        cast(List[PokemonCard], pokemon)[0] if isinstance(pokemon, list) else pokemon
+        cast(list[PokemonCard], pokemon)[0] if isinstance(pokemon, list) else pokemon
     )
 
     try:
@@ -193,7 +189,7 @@ def discard_card(player: Player, card: Card) -> None:
     player.discard.append(item)
 
 
-def check_energy(cost: List[CardType], energy: List[CardType]) -> bool:
+def check_energy(cost: list[CardType], energy: list[CardType]) -> bool:
     """
     check energy for attack or retreat
     """
@@ -208,14 +204,11 @@ def check_energy(cost: List[CardType], energy: List[CardType]) -> bool:
             i += 1
         j += 1
 
-    if i == len(cost):
-        return True
-    else:
-        return False
+    return i == len(cost)
 
 
-def check_evolve(evolved_card: PokemonCard, state: State) -> List[PokemonCard]:
-    can_evolve: List[PokemonCard] = []
+def check_evolve(evolved_card: PokemonCard, state: State) -> list[PokemonCard]:
+    can_evolve: list[PokemonCard] = []
     for pokemon in current_all_pokemon(state):
         if pokemon.name == evolved_card.evolveFrom[0] and not pokemon.firstTurnPlayed:
             can_evolve.append(pokemon)
@@ -223,7 +216,7 @@ def check_evolve(evolved_card: PokemonCard, state: State) -> List[PokemonCard]:
     return can_evolve
 
 
-def judge_termination(state: State) -> Tuple[bool, Optional[PlayerId]]:
+def judge_termination(state: State) -> tuple[bool, PlayerId | None]:
     """
     Judge whether the game ends
 
@@ -232,7 +225,7 @@ def judge_termination(state: State) -> Tuple[bool, Optional[PlayerId]]:
         winner (PlayerId): winner playerId
     """
     terminated = False
-    winner: Optional[PlayerId] = None
+    winner: PlayerId | None = None
     player1, player2 = state.player1, state.player2
     if state.termination_reason == "deck_out" and state.termination_loser is not None:
         terminated = True
@@ -255,7 +248,7 @@ def next_turn(state: State) -> None:
     # Reactive ChooseCardActions from the opponent (e.g. bench replacement after KO)
     # may appear at the tail of actions_buffer after the current player's last action.
     # We skip those trailing opponent ChooseCardActions before collecting.
-    current_turn_actions: List[Action] = []
+    current_turn_actions: list[Action] = []
     found_current_player = False
     for action in reversed(state.actions_buffer):
         if action.playerId == player.id:
@@ -275,7 +268,7 @@ def next_turn(state: State) -> None:
     # reset all pokemons' states
     for pokemon in current_all_pokemon(state):
         # Call reset_turn_stats method if it exists
-        if hasattr(pokemon, "reset_turn_stats") and callable(getattr(pokemon, "reset_turn_stats")):
+        if hasattr(pokemon, "reset_turn_stats") and callable(pokemon.reset_turn_stats):
             pokemon.reset_turn_stats()  # type: ignore[union-attr]
 
         # reset active ability usability
@@ -339,7 +332,7 @@ def auto_end_turn(state: State) -> None:
     next_turn(state)
 
 
-def opponent_active(state: State) -> List[PokemonCard]:
+def opponent_active(state: State) -> list[PokemonCard]:
     """
     get opponent's active pokemon
     """
@@ -349,7 +342,7 @@ def opponent_active(state: State) -> List[PokemonCard]:
         return state.player1.active
 
 
-def opponent_bench(state: State) -> List[PokemonCard]:
+def opponent_bench(state: State) -> list[PokemonCard]:
     """
     get opponent's bench pokemon
     """
@@ -359,7 +352,7 @@ def opponent_bench(state: State) -> List[PokemonCard]:
         return state.player1.bench
 
 
-def opponent_all_pokemon(state: State) -> List[PokemonCard]:
+def opponent_all_pokemon(state: State) -> list[PokemonCard]:
     """
     get opponent's active pokemon + bench pokemon
     """
@@ -385,7 +378,7 @@ def is_active_ability_suppressed(player: Player, state: State) -> bool:
     return False
 
 
-def current_active(state: State) -> List[PokemonCard]:
+def current_active(state: State) -> list[PokemonCard]:
     """
     get my active pokemon
     """
@@ -395,7 +388,7 @@ def current_active(state: State) -> List[PokemonCard]:
         return state.player2.active
 
 
-def current_bench(state: State) -> List[PokemonCard]:
+def current_bench(state: State) -> list[PokemonCard]:
     """
     get my bench pokemon
     """
@@ -405,7 +398,7 @@ def current_bench(state: State) -> List[PokemonCard]:
         return state.player2.bench
 
 
-def current_all_pokemon(state: State) -> List[PokemonCard]:
+def current_all_pokemon(state: State) -> list[PokemonCard]:
     """
     get my active pokemon + bench pokemon
     """
@@ -440,20 +433,18 @@ def can_attach_energy(state: State) -> bool:
 
 
 def can_attach_tool(pokemon: PokemonCard) -> bool:
-    if hasattr(pokemon, "attachment") and all(
-        card.superType != SuperType.TRAINER for card in pokemon.attachment
-    ):
-        return True
-    else:
-        return False
+    return bool(
+        hasattr(pokemon, "attachment")
+        and all(card.superType != SuperType.TRAINER for card in pokemon.attachment)
+    )
 
 
-def retreat_combinations(energy: List[EnergyCard], retreat_cnt: int) -> List[List[EnergyCard]]:
+def retreat_combinations(energy: list[EnergyCard], retreat_cnt: int) -> list[list[EnergyCard]]:
     """
     get discard energy combinations for retreat
     """
 
-    def check_combo(combo: List[EnergyCard]) -> bool:
+    def check_combo(combo: list[EnergyCard]) -> bool:
         all_provides = 0
         for card in combo:
             all_provides += len(card.provides)
@@ -464,11 +455,11 @@ def retreat_combinations(energy: List[EnergyCard], retreat_cnt: int) -> List[Lis
                 return False
         return True
 
-    all_combinations: List[List[EnergyCard]] = [[]]
+    all_combinations: list[list[EnergyCard]] = [[]]
     for card in energy:
         all_combinations += [cur + [card] for cur in all_combinations]
 
-    result: List[List[EnergyCard]] = []
+    result: list[list[EnergyCard]] = []
     for combination in all_combinations:
         if check_combo(combination):
             result.append(combination)
@@ -476,11 +467,11 @@ def retreat_combinations(energy: List[EnergyCard], retreat_cnt: int) -> List[Lis
     return result
 
 
-def get_name(cards: List[Card]) -> List[str]:
+def get_name(cards: list[Card]) -> list[str]:
     """
     get card name in a list, especially for print_log()
     """
-    name_list: List[str] = []
+    name_list: list[str] = []
     for card in cards:
         if hasattr(card, "name"):
             name_list.append(card.name)

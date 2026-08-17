@@ -15,9 +15,9 @@ from ptcg.core.enums import (
     PokemonPosition,
     PokemonRule,
     PokemonType,
+    SpecialCondition,
     Stage,
     SuperType,
-    SpecialCondition,
 )
 from ptcg.core.reducer import (
     reduce_attack_action,

@@ -39,9 +39,7 @@ def test_choice_action_space_preserves_combination_order_and_validation():
         candidates,
     )
     expected = [
-        list(combo)
-        for count in (1, 2)
-        for combo in itertools.combinations(candidates, count)
+        list(combo) for count in (1, 2) for combo in itertools.combinations(candidates, count)
     ]
 
     assert [action.chosen for action in actions] == expected

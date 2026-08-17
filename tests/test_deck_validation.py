@@ -31,11 +31,7 @@ def test_standard_deck_requires_exactly_sixty_cards():
 
 
 def test_standard_deck_limits_same_name_across_printings_to_four():
-    deck = Deck(
-        _cards("PAF-007", 4)
-        + _cards("OBF-026", 1)
-        + _cards("SVE-002", 55)
-    )
+    deck = Deck(_cards("PAF-007", 4) + _cards("OBF-026", 1) + _cards("SVE-002", 55))
 
     with pytest.raises(InvalidDeckError, match="Charmander.*5 copies"):
         deck.validate()

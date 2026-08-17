@@ -7,7 +7,9 @@ from tests.helpers.state_builder import PlayerZones, make_state
 
 
 @pytest.mark.card("BRS-151")
-@pytest.mark.card_coverage("BRS-151", "get_actions", "reduce_action", "negative_case", "zone_change")
+@pytest.mark.card_coverage(
+    "BRS-151", "get_actions", "reduce_action", "negative_case", "zone_change"
+)
 def test_double_turbo_energy_attaches_as_two_colorless_special_energy():
     double_turbo_energy = make_card("BRS-151")
     charmander = make_card("PAF-007")

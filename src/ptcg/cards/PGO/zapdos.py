@@ -106,4 +106,3 @@ class PGO029Zapdos(PokemonCard):
 
     def _apply_lightning_symbol(self, state):
         """Lightning Symbol: Your Basic Lightning Pokémon's attacks do 10 more damage"""
-        pass

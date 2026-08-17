@@ -28,8 +28,9 @@ Key Concepts:
 
 import inspect
 import random
+from collections.abc import Generator, Sequence
 from pathlib import Path
-from typing import Generator, Literal, Optional, Sequence
+from typing import Literal
 
 from loguru import logger
 
@@ -83,17 +84,17 @@ class PokemonTCG:
 
     gamestate: State
     recorder: GameRecorder
-    winner: Optional[PlayerId]
+    winner: PlayerId | None
     cur_available_actions: Sequence[Action]
     reducer: Generator
 
     def __init__(
         self,
         seed: int = 0,
-        render_mode: Optional[str] = None,
+        render_mode: str | None = None,
         verbose: bool = False,
-        deck1: Optional[str] = None,
-        deck2: Optional[str] = None,
+        deck1: str | None = None,
+        deck2: str | None = None,
         record_game: bool = True,
         invalid_action_policy: Literal["raise", "random"] = "raise",
         expose_full_state: bool = False,
@@ -130,7 +131,7 @@ class PokemonTCG:
     # Initialization & Reset
     # =========================================================================
 
-    def reset(self, options: Optional[dict] = None, *, seed: Optional[int] = None) -> tuple:
+    def reset(self, options: dict | None = None, *, seed: int | None = None) -> tuple:
         """Reset the game environment to initial state.
 
         This method:
@@ -389,9 +390,12 @@ class PokemonTCG:
         source = action.source
 
         acting_player = current_player(self.gamestate)
-        if hasattr(action, "playerId") and action.playerId == acting_player.id:
-            if not isinstance(source, type(acting_player)):
-                acting_player.record_action(action)
+        if (
+            hasattr(action, "playerId")
+            and action.playerId == acting_player.id
+            and not isinstance(source, type(acting_player))
+        ):
+            acting_player.record_action(action)
 
         if inspect.isgeneratorfunction(source.reduce_action):
             yield from source.reduce_action(action, self.gamestate)

@@ -1,21 +1,21 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ptcg.core.ability import Ability
 from ptcg.core.attack import Attack
 from ptcg.core.enums import *
 
 
-def _build_ability_info(ability) -> Dict[str, Any]:
-    info: Dict[str, Any] = {"name": ability.name}
+def _build_ability_info(ability) -> dict[str, Any]:
+    info: dict[str, Any] = {"name": ability.name}
     if hasattr(ability, "text") and ability.text:
         info["text"] = ability.text
     return info
 
 
-def _build_attack_info(attack) -> Dict[str, Any]:
-    info: Dict[str, Any] = {"name": attack.name, "cost": [e.name for e in attack.cost]}
+def _build_attack_info(attack) -> dict[str, Any]:
+    info: dict[str, Any] = {"name": attack.name, "cost": [e.name for e in attack.cost]}
     if hasattr(attack, "damage"):
         info["damage"] = attack.damage
     if hasattr(attack, "text") and attack.text:
@@ -44,7 +44,7 @@ class Card(ABC):
         result["number"] = self.number
         return result
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "cardType": self.cardType.name
@@ -66,21 +66,21 @@ class PokemonCard(Card):
     pokemonType: PokemonType
     pokemonRule: PokemonRule
     stage: Stage
-    retreat: List[CardType]
-    weakness: List[CardType]
-    resistance: List[CardType]
+    retreat: list[CardType]
+    weakness: list[CardType]
+    resistance: list[CardType]
     prize: int
 
     position: PokemonPosition
 
-    energy: List[CardType]
-    attachment: List[Card]
+    energy: list[CardType]
+    attachment: list[Card]
 
-    evolveFrom: List[str]
-    evolved: List[Card]
+    evolveFrom: list[str]
+    evolved: list[Card]
 
-    attacks: List[Attack]
-    ability: List[Ability]
+    attacks: list[Attack]
+    ability: list[Ability]
 
     firstTurnPlayed: bool
 
@@ -111,7 +111,7 @@ class PokemonCard(Card):
 
         return result
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         info = super().get_info()
         info["pokemonType"] = self.pokemonType.name
         info["hp"] = self.hp
@@ -134,14 +134,14 @@ class PokemonCard(Card):
 
 
 class EnergyCard(Card):
-    provides: List[CardType]
+    provides: list[CardType]
     energyType: EnergyType
 
     def __init__(self) -> None:
         super().__init__()
         self.superType = SuperType.ENERGY
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         info = super().get_info()
         info["energyType"] = self.energyType.name
         info["provides"] = [e.name for e in self.provides]
@@ -157,7 +157,7 @@ class TrainerCard(Card):
         super().__init__()
         self.superType = SuperType.TRAINER
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         info = super().get_info()
         info["trainerType"] = self.trainerType.name
         if hasattr(self, "text") and self.text:
@@ -180,7 +180,7 @@ class SupporterCard(TrainerCard):
 
 
 class StadiumCard(TrainerCard):
-    playedFrom: Optional[PlayerId]
+    playedFrom: PlayerId | None
 
     def __init__(self) -> None:
         super().__init__()
@@ -189,8 +189,8 @@ class StadiumCard(TrainerCard):
 
 
 class ToolCard(TrainerCard):
-    attacks: List[Attack]
-    ability: List[Ability]
+    attacks: list[Attack]
+    ability: list[Ability]
     hasAttached: bool
 
     def __init__(self) -> None:
@@ -198,7 +198,7 @@ class ToolCard(TrainerCard):
         self.superType = SuperType.TRAINER
         self.trainerType = TrainerType.TOOL
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         info = super().get_info()
         if hasattr(self, "ability") and self.ability:
             info["abilities"] = [_build_ability_info(a) for a in self.ability]

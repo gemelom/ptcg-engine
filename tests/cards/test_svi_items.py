@@ -17,9 +17,9 @@ from tests.helpers.state_builder import PlayerZones, make_state
 )
 def test_electric_generator_attaches_lightning_energy_to_benched_lightning_pokemon():
     card = make_card("SVI-170")
-    lightning_energy = make_card("SVE-004")   # Lightning Energy
+    lightning_energy = make_card("SVE-004")  # Lightning Energy
     other_card = make_card("PAF-007")
-    miraidon = make_card("SVI-253")           # Lightning type benched Pokemon
+    miraidon = make_card("SVI-253")  # Lightning type benched Pokemon
     state = make_state(
         PlayerZones(
             hand=[card],

@@ -144,8 +144,8 @@ def test_gardevoir_ex_psychic_embrace_requires_basic_psychic_energy_and_safe_tar
 )
 def test_miraidon_ex_tandem_unit_puts_lightning_pokemon_on_bench():
     miraidon = make_card("SVI-253")
-    lightning1 = make_card("SVI-253")   # another Miraidon ex - Basic Lightning
-    lightning2 = make_card("BRS-048")   # Raikou V - Basic Lightning
+    lightning1 = make_card("SVI-253")  # another Miraidon ex - Basic Lightning
+    lightning2 = make_card("BRS-048")  # Raikou V - Basic Lightning
     non_lightning = make_card("PAF-007")
     state = make_state(
         PlayerZones(
