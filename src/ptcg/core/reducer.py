@@ -28,7 +28,12 @@ from ptcg.core.action import (
     choose_card_actions,
 )
 from ptcg.core.enums import CardPosition, PlayerId, PokemonPosition, SuperType
-from ptcg.core.exceptions import CardPlayError, GameTermination, InvalidCardPositionError
+from ptcg.core.exceptions import (
+    CardPlayError,
+    GameTermination,
+    InvalidActionError,
+    InvalidCardPositionError,
+)
 from ptcg.utils.utils import (
     current_active,
     current_player,
@@ -516,8 +521,8 @@ def reduce_choose_card_actions(
     Returns:
         List of chosen cards.
 
-    Note:
-        If player provides invalid action, a random valid one is chosen.
+    Invalid choices raise ``InvalidActionError`` by default. Environments can
+    explicitly opt into random replacement through ``invalid_action_policy``.
     """
     available_actions, prompt = actions
 
@@ -547,11 +552,19 @@ def reduce_choose_card_actions(
 
     choose_card_action = yield (obs, reward, done, info)
 
-    # Validate action - fall back to random if invalid
+    # Validate the exact action object offered to the caller. This prevents a
+    # stale or malformed choice from silently changing game state.
     if choose_card_action not in available_actions:
         logger.debug(f"{state.turn} invalid choose card action: {choose_card_action}")
-        rng = state.rng or random
-        choose_card_action = rng.choice(available_actions)
+        if state.invalid_action_policy == "random":
+            rng = state.rng or random.Random()
+            choose_card_action = rng.choice(available_actions)
+        else:
+            raise InvalidActionError(
+                f"Action {choose_card_action!r} is not available for card selection; "
+                f"choose one of the {len(available_actions)} actions in "
+                "info['raw_available_actions']"
+            )
 
     chosen_card = choose_card_action.chosen
     state.actions_buffer.append(choose_card_action)

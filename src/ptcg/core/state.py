@@ -28,6 +28,7 @@ class State:
     turn_just_switched: bool = False
     auto_events: List[str] = field(default_factory=list)
     rng: Optional[random.Random] = field(default=None, repr=False, compare=False)
+    invalid_action_policy: str = "raise"
     termination_reason: Optional[str] = None
     termination_loser: Optional[PlayerId] = None
 
