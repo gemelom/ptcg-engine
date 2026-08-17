@@ -178,7 +178,7 @@ class BRS158RaichuV(PokemonCard):
                     )
 
         # Shuffle deck
-        shuffle_cards(player.left)
+        shuffle_cards(player.left, state)
 
         # End turn appropriately based on whether it's the first turn
         if player.firstTurn:

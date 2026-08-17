@@ -50,7 +50,7 @@ class TEF145CiphermaniacsCodebreaking(SupporterCard):
             # Step 2: Remove chosen cards from deck, then shuffle remaining
             for card in chosen:
                 player.left.remove(card)
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
 
             # Step 3: Player chooses which card goes on top (drawn first)
             tips = "Choose which card to place on top of your deck (it will be drawn first)."

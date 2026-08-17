@@ -76,4 +76,4 @@ class OBF186Arven(SupporterCard):
             else:
                 raise ValueError(f"Invalid action: {action}")
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)

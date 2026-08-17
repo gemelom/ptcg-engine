@@ -68,7 +68,7 @@ class SVI175Jacq(SupporterCard):
                     )
 
             # Shuffle deck
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
 
             # Set supporterPlayedTurn = True
             player.supporterPlayedTurn = True

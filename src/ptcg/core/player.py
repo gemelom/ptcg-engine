@@ -131,11 +131,12 @@ class Player:
             "total_turns": len(self.turn_action_history) + (1 if self.current_turn_actions else 0),
         }
 
-    def shuffle(self):
+    def shuffle(self, rng=None):
         """
         shuffle when game start until hand is valid
         """
-        random.shuffle(self.deck)
+        rng = rng or random
+        rng.shuffle(self.deck)
         self.hand = self.deck[:7]
         self.prize = self.deck[7:13]
         self.left = self.deck[13:]
@@ -144,7 +145,7 @@ class Player:
             return card.superType == SuperType.POKEMON and card.stage == Stage.BASIC
 
         if all(not can_play(card) for card in self.hand):
-            self.shuffle()
+            self.shuffle(rng)
 
         def set_cards_position(cards, position):
             for idx, card in enumerate(cards):

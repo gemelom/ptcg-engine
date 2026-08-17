@@ -137,7 +137,7 @@ class TEF129Dudunsparce(PokemonCard):
         self.energy = []
         self.attachment = []
 
-        shuffle_cards(player.left)
+        shuffle_cards(player.left, state)
 
         # If was active, force player to choose a bench replacement
         if was_active and bench_has_pokemon:

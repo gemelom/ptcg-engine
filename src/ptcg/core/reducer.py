@@ -550,7 +550,8 @@ def reduce_choose_card_actions(
     # Validate action - fall back to random if invalid
     if choose_card_action not in available_actions:
         logger.debug(f"{state.turn} invalid choose card action: {choose_card_action}")
-        choose_card_action = random.choice(available_actions)
+        rng = state.rng or random
+        choose_card_action = rng.choice(available_actions)
 
     chosen_card = choose_card_action.chosen
     state.actions_buffer.append(choose_card_action)

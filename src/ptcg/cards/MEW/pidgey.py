@@ -102,7 +102,7 @@ class MEW016Pidgey(PokemonCard):
                     print(player.left)
                     raise ValueError(f"Invalid action: {action}")
 
-                shuffle_cards(player.left)
+                shuffle_cards(player.left, state)
                 auto_end_turn(state)
 
             elif action.attack == self.attacks[1]:

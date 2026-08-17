@@ -99,7 +99,7 @@ class OBF164PidgeotEX(PokemonCard):
                     state,
                 )
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
             # once used each turn
             self.abilityUsed = True
             player.onceUsedTurn[action.ability.name] = True

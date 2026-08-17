@@ -116,7 +116,7 @@ class PAF054CharizardEX(PokemonCard):
                     AttachEnergyAction(player.id, energy_card, target[0]), state
                 )
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
 
     def reduce_action(self, action, state):
         if isinstance(action, EvolvePokemonAction):

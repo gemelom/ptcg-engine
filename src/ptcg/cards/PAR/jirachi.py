@@ -112,7 +112,7 @@ class PAR126Jirachi(PokemonCard):
                     state,
                 )
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
             auto_end_turn(state)
 
         else:

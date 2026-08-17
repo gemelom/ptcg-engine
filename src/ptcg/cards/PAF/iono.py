@@ -43,7 +43,7 @@ class PAF080Iono(SupporterCard):
 
             # Shuffle player's hand
             if player.hand:
-                shuffle_cards(player.hand)
+                shuffle_cards(player.hand, state)
                 move_cards(
                     player.hand[:],
                     (player.id, CardPosition.HAND),
@@ -65,7 +65,7 @@ class PAF080Iono(SupporterCard):
 
             # Same for opponent
             if opponent.hand:
-                shuffle_cards(opponent.hand)
+                shuffle_cards(opponent.hand, state)
                 move_cards(
                     opponent.hand[:],
                     (opponent.id, CardPosition.HAND),
@@ -85,8 +85,8 @@ class PAF080Iono(SupporterCard):
                 )
 
             # Shuffle decks
-            shuffle_cards(player.left)
-            shuffle_cards(opponent.left)
+            shuffle_cards(player.left, state)
+            shuffle_cards(opponent.left, state)
 
         # Mark supporter as used
         player.supporterPlayedTurn = True

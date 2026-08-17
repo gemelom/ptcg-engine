@@ -112,7 +112,7 @@ class PAR178TechnicalMachineEvolution(ToolCard):
                     if chosen:
                         evolution_card = chosen[0]
                         self._evolve_from_deck(evolution_card, pokemon, player)
-                        shuffle_cards(player.left)
+                        shuffle_cards(player.left, state)
                         auto_end_turn(state)
 
     def _evolve_from_deck(self, evolution_card, pokemon, player):

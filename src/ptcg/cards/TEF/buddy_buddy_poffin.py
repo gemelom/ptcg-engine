@@ -59,7 +59,7 @@ class TEF144BuddyBuddyPoffin(ItemCard):
                 print(player.left)
                 raise ValueError(f"Invalid action: {action}")
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
             move_cards(
                 self, (player.id, CardPosition.HAND), (player.id, CardPosition.DISCARD), state
             )

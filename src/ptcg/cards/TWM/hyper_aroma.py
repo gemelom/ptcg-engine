@@ -70,4 +70,4 @@ class TWM152HyperAroma(ItemCard):
                     )
 
             # Shuffle deck
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)

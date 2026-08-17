@@ -96,7 +96,7 @@ class PAL171Artazon(StadiumCard):
                     (player.id, CardPosition.BENCH),
                     state,
                 )
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
             player.stadiumUsedTurn = True
 
         elif isinstance(action, DiscardStadiumAction):

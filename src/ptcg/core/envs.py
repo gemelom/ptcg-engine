@@ -97,6 +97,9 @@ class PokemonTCG:
         record_game: bool = True,
     ):
         self.seed = seed
+        # Python recommends separate Random instances for generators that must
+        # not share state: https://docs.python.org/3.12/library/random.html#random.Random
+        self.rng = random.Random(seed)
         self.render_mode = render_mode
         self.deck1 = deck1
         self.deck2 = deck2
@@ -117,7 +120,7 @@ class PokemonTCG:
     # Initialization & Reset
     # =========================================================================
 
-    def reset(self, options: Optional[dict] = None) -> tuple:
+    def reset(self, options: Optional[dict] = None, *, seed: Optional[int] = None) -> tuple:
         """Reset the game environment to initial state.
 
         This method:
@@ -128,10 +131,14 @@ class PokemonTCG:
 
         Args:
             options: Optional configuration (currently unused).
+            seed: Optional seed that resets this environment's independent random stream.
 
         Returns:
             Tuple of (observation, reward, done, info).
         """
+        if seed is not None:
+            self.set_seed(seed)
+
         self._load_decks()
         self._init_game_state()
         self._init_generator()
@@ -150,7 +157,7 @@ class PokemonTCG:
         player1 = Player(self._deck1_cards)
         player2 = Player(self._deck2_cards)
 
-        self.gamestate = State(player1, player2)
+        self.gamestate = State(player1, player2, rng=self.rng)
         self.winner = None
         self.cur_available_actions = []
 
@@ -161,8 +168,8 @@ class PokemonTCG:
 
         self.gamestate.player1.id = PlayerId.PLAYER1
         self.gamestate.player2.id = PlayerId.PLAYER2
-        self.gamestate.player1.shuffle()
-        self.gamestate.player2.shuffle()
+        self.gamestate.player1.shuffle(self.rng)
+        self.gamestate.player2.shuffle(self.rng)
 
         self.start_stage = True
 
@@ -297,7 +304,7 @@ class PokemonTCG:
             return action
 
         logger.debug(f"{self.gamestate.turn} invalid action: {action}")
-        return random.choice(self.cur_available_actions)
+        return self.rng.choice(self.cur_available_actions)
 
     def _log_action(self, action: Action) -> None:
         if self.recorder:
@@ -429,4 +436,4 @@ class PokemonTCG:
             seed: The seed value.
         """
         self.seed = seed
-        random.seed(seed)
+        self.rng.seed(seed)

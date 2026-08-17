@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
 
@@ -26,6 +27,7 @@ class State:
     last_turn_opponent_actions: List[Action] = field(default_factory=list)
     turn_just_switched: bool = False
     auto_events: List[str] = field(default_factory=list)
+    rng: Optional[random.Random] = field(default=None, repr=False, compare=False)
 
     def get_area(self, area: Tuple[PlayerId, CardPosition, Optional[int]]) -> Sequence[Card]:
         if area[1] == CardPosition.STADIUM:

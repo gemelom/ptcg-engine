@@ -53,4 +53,4 @@ class PAF084NestBall(ItemCard):
             else:
                 raise ValueError(f"Invalid action: {action}")
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)

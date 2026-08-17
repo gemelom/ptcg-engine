@@ -42,7 +42,7 @@ class ASC192LilliesDetermination(SupporterCard):
                     state,
                 )
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
 
             draw_count = 8 if len(player.prize) == 6 else 6
             draw_count = min(draw_count, len(player.left))

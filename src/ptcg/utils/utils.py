@@ -22,7 +22,8 @@ if TYPE_CHECKING:
 
 
 def flip_coin(state: Optional["State"] = None) -> Coin:
-    if random.randint(0, 1) == 0:
+    rng = state.rng if state is not None and state.rng is not None else random
+    if rng.randint(0, 1) == 0:
         result = Coin.HEAD
     else:
         result = Coin.TAIL
@@ -32,8 +33,9 @@ def flip_coin(state: Optional["State"] = None) -> Coin:
     return result
 
 
-def shuffle_cards(cards: List[Card]) -> None:
-    random.shuffle(cards)
+def shuffle_cards(cards: List[Card], state: Optional["State"] = None) -> None:
+    rng = state.rng if state is not None and state.rng is not None else random
+    rng.shuffle(cards)
     for idx, card in enumerate(cards):
         card.index = idx + 1
 

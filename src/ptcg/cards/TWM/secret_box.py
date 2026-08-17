@@ -94,4 +94,4 @@ class TWM163SecretBox(ItemCard):
                             state,
                         )
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)

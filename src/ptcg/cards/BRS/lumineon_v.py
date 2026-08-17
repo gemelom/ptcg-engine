@@ -92,7 +92,7 @@ class BRS040LumineonV(PokemonCard):
                     state,
                 )
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
 
     def reduce_action(self, action, state):
         if isinstance(action, PlayPokemonAction):
@@ -122,7 +122,7 @@ class BRS040LumineonV(PokemonCard):
             player.bench.remove(chosen_card)
             move_pokemon(player, chosen_card)
 
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
             auto_end_turn(state)
 
         elif isinstance(action, RetreatAction):

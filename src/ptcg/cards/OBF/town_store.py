@@ -83,7 +83,7 @@ class OBF196TownStore(StadiumCard):
                     (player.id, CardPosition.HAND),
                     state,
                 )
-            shuffle_cards(player.left)
+            shuffle_cards(player.left, state)
             player.stadiumUsedTurn = True
 
         elif isinstance(action, DiscardStadiumAction):
