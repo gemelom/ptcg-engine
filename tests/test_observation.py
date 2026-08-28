@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from ptcg import PokemonTCG
 from ptcg.core.enums import PlayerId
 from tests.helpers.cards import make_card
@@ -71,3 +73,26 @@ def test_full_state_is_only_exposed_with_explicit_debug_option():
     _obs, _reward, _done, debug_info = debug_env.reset()
 
     assert debug_info["full_state"] is debug_env.gamestate
+
+
+def test_environment_observe_keeps_a_fixed_player_perspective():
+    env = PokemonTCG(seed=42, record_game=False)
+    _obs, _reward, _done, info = env.reset()
+
+    player1_observation = env.observe(PlayerId.PLAYER1)
+    player2_observation = env.observe(PlayerId.PLAYER2)
+
+    assert player1_observation["viewer"] == "player1"
+    assert player2_observation["viewer"] == "player2"
+    assert player1_observation["self"]["hand"] is not None
+    assert player1_observation["opponent"]["hand"] is None
+    assert player2_observation["self"]["hand"] is not None
+    assert player2_observation["opponent"]["hand"] is None
+    assert info["turn"] == env.gamestate.turn
+
+
+def test_environment_observe_requires_reset():
+    env = PokemonTCG(record_game=False)
+
+    with pytest.raises(RuntimeError, match="must be reset"):
+        env.observe(PlayerId.PLAYER1)

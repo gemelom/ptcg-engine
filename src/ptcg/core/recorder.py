@@ -34,6 +34,7 @@ class EventType(Enum):
     STATE = "state"
     CHOOSE_CARD_PROMPT = "choose_card_prompt"
     TERMINATION = "termination"
+    ABORTED = "aborted"
 
 
 @dataclass
@@ -183,6 +184,17 @@ class GameRecorder:
         )
         self.events.append(event)
 
+        if self.auto_save:
+            self.save()
+
+    def record_aborted(self, reason: str) -> None:
+        """Record an incomplete game and persist it when auto-save is enabled."""
+        self.events.append(
+            GameEvent(
+                event_type=EventType.ABORTED,
+                data={"reason": reason},
+            )
+        )
         if self.auto_save:
             self.save()
 

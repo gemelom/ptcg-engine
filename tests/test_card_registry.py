@@ -33,6 +33,24 @@ def test_list_all_cards():
     assert "PAF-054" in all_cards
 
 
+def test_describe_returns_detached_public_card_metadata():
+    description = registry.describe("PAF", "054")
+
+    assert description is not None
+    assert description["id"] == "PAF-054"
+    assert description["name"] == "Charizard ex"
+    assert description["set_name"] == "PAF"
+    assert description["number"] == "054"
+    assert description["attacks"]
+
+    description["name"] = "Changed"
+    assert registry.describe("PAF", "054")["name"] == "Charizard ex"
+
+
+def test_describe_returns_none_for_unknown_card():
+    assert registry.describe("XXX", "999") is None
+
+
 def test_registry_works_without_database_json(tmp_path, monkeypatch):
     """CardRegistry discovers cards from the filesystem, not database.json."""
     # Ensure no database.json exists — registry should still work

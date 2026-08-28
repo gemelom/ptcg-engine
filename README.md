@@ -1,5 +1,17 @@
 # ptcg-engine
 
+<pre align="center">
+ ____  _____ ____ ____   _____ _   _  ____ ___ _   _ _____
+|  _ \|_   _/ ___/ ___| | ____| \ | |/ ___|_ _| \ | | ____|
+| |_) | | || |  | |  _  |  _| |  \| | |  _ | ||  \| |  _|
+|  __/  | || |__| |_| | | |___| |\  | |_| || || |\  | |___
+|_|     |_| \____\____| |_____|_| \_|\____|___|_| \_|_____|
+
++==================[ INTERACTIVE BATTLE ENGINE ]==================+
+|          &gt;&gt; PLAY  //  SIMULATE  //  TEST  //  REPEAT &lt;&lt;         |
++=================================================================+
+</pre>
+
 [![CI](https://github.com/gemelom/ptcg-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/gemelom/ptcg-engine/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f.svg)](LICENSE)
@@ -22,8 +34,8 @@ bot development, self-play, and reproducible experiments.
   identities while retaining a debugging-only full-state mode.
 - **Testable card rules** — card behavior lives in focused modules with rule-specific
   pytest coverage metadata.
-- **Lightweight integration** — the package has one runtime dependency and a Gym-like
-  `reset()` / `step()` interface.
+- **Lightweight integration** — the package keeps a small runtime dependency set and a
+  Gym-like `reset()` / `step()` interface.
 
 ## Quick Start
 
@@ -32,15 +44,46 @@ Requires Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 ```bash
 git clone https://github.com/gemelom/ptcg-engine.git
 cd ptcg-engine
-uv sync --frozen --all-groups
-uv run ptcg --deck1 charizard_ex --deck2 miraidon_ex --seed 42 --policy random --quiet
+uv tool install --editable .
+ptcg --deck1 charizard_ex --deck2 miraidon_ex --seed 42 --policy random --quiet
 ```
 
-You can also use the module entry point:
+The editable install exposes `ptcg` as a user-level command and reflects changes made
+in the checkout without reinstalling it. You can also use the module entry point:
 
 ```bash
 uv run python -m ptcg --quiet --seed 42
 ```
+
+## Interactive CLI
+
+Play as Player 1 against the built-in random or first-action policy:
+
+```bash
+ptcg play \
+  --deck charizard_ex \
+  --opponent-deck miraidon_ex \
+  --opponent-policy random \
+  --seed 42
+```
+
+The interactive command loop shows a player-safe board, your hand, recent public
+events, and the currently legal actions. Enter an action number to play it. Card
+selection prompts use candidate numbers separated by spaces or commas.
+
+| Command | Purpose |
+| --- | --- |
+| `<number>` | Execute a legal action |
+| `<n1> <n2>` | Select one or more card candidates when prompted |
+| `board` / `hand` | Reprint the public board or your hand |
+| `inspect <area> <number>` | Show public card details |
+| `help` | Show the complete command reference |
+| `quit` | Confirm and leave the current game |
+
+The opponent's hand and all deck and Prize identities remain hidden. Opponent
+actions advance automatically until the next human decision. Interactive games do
+not support undo or resuming an unfinished match; `--record` saves an aborted event
+log when a recorded game is stopped early.
 
 ## Python API
 
@@ -103,7 +146,7 @@ Bundled deck fixtures live in `src/ptcg/decks` and can be selected by name:
 You can also pass a deck text file directly:
 
 ```bash
-uv run ptcg --deck1 ./my_deck.txt --deck2 charizard_ex --seed 7
+ptcg --deck1 ./my_deck.txt --deck2 charizard_ex --seed 7
 ```
 
 Decks are validated before setup so malformed lists fail with actionable errors.
@@ -114,9 +157,10 @@ Decks are validated before setup so malformed lists fail with actionable errors.
 src/ptcg/
 ├── core/       # state, actions, reducers, environments, rewards, recording
 ├── cards/      # card implementations grouped by expansion
+├── console/    # interactive session orchestration and Rich terminal adapter
 ├── decks/      # bundled deck fixtures
 ├── utils/      # loading, validation, rule helpers
-└── cli.py      # headless game runner
+└── cli.py      # simulation and interactive command dispatcher
 
 tests/
 ├── cards/      # rule-focused card tests
