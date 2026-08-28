@@ -83,25 +83,6 @@ For engine debugging only, `PokemonTCG(expose_full_state=True)` adds the mutable
 `State` object to `info["full_state"]`. Do not enable it for agents that must respect
 hidden information.
 
-## How It Works
-
-```mermaid
-flowchart LR
-    Policy["Policy / agent"] -->|"selects a legal Action"| Env["PokemonTCG environment"]
-    Env --> Discovery["Card action discovery"]
-    Discovery --> Reducers["Shared rule reducers"]
-    Reducers --> State["Mutable game State"]
-    State --> Observation["Player-relative observation"]
-    Observation --> Policy
-    Cards["Card modules"] --> Discovery
-    Cards --> Reducers
-```
-
-Cards declare attacks, abilities, and currently legal actions. Shared reducers perform
-zone moves, attacks, knockouts, prizes, choices, retreat, evolution, turn transitions,
-and termination. Multi-step choices pause through Python generators, which keeps card
-logic explicit without coupling it to a UI or network protocol.
-
 ## Included Deck Fixtures
 
 Bundled deck fixtures live in `src/ptcg/decks` and can be selected by name:
