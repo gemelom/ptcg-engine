@@ -735,6 +735,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
+    { name = "rich" },
 ]
 
 [package.dev-dependencies]
@@ -747,7 +748,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "loguru", specifier = ">=0.7.0" }]
+requires-dist = [
+    { name = "loguru", specifier = ">=0.7.0" },
+    { name = "rich", specifier = ">=15.0.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [

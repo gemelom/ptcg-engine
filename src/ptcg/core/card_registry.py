@@ -1,7 +1,7 @@
 import importlib
 import inspect
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from ptcg.core.card import Card
 
@@ -59,6 +59,23 @@ class CardRegistry:
     def get_by_set_and_number(self, set_name: str, number: str) -> type[Card] | None:
         self._ensure_loaded()
         return self._cards.get(f"{set_name}-{number}")
+
+    def describe(self, set_name: str, number: str) -> dict[str, Any] | None:
+        """Return detached public metadata for a registered card."""
+        card_class = self.get_by_set_and_number(set_name, number)
+        if card_class is None:
+            return None
+
+        card = card_class()
+        description = card.get_info()
+        description.update(
+            {
+                "id": card.id,
+                "set_name": card.set_name,
+                "number": card.number,
+            }
+        )
+        return description
 
     def list_all(self) -> list[str]:
         self._ensure_loaded()

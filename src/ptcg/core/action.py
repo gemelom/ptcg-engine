@@ -294,6 +294,8 @@ class ChooseCardAction(Action):
         if self.hidden:
             plural = "cards" if len(self.chosen) > 1 else "card"
             return f"{self._player_str()} chose {len(self.chosen)} hidden {plural}"
+        if not self.chosen:
+            return f"{self._player_str()} chose no cards"
         card_str = ", ".join(self._choice_card_str(card) for card in self.chosen)
         plural = "cards" if len(self.chosen) > 1 else "card"
         return f"{self._player_str()} chose {plural}: {card_str}"
@@ -422,6 +424,25 @@ class ChooseCardActionSpace(Sequence[ChooseCardAction]):
         return len(set(chosen_positions)) == len(chosen_positions) and chosen_positions == sorted(
             chosen_positions
         )
+
+    def action_for_candidate_indices(self, indices: Sequence[int]) -> ChooseCardAction:
+        """Build a legal choice from zero-based candidate indices.
+
+        Indices may be entered in any order; the returned action is normalized to
+        candidate order so it satisfies the action space's membership contract.
+        This method avoids enumerating a potentially exponential action space.
+        """
+        normalized = sorted(indices)
+        if len(set(normalized)) != len(normalized):
+            raise ValueError("Candidate indices must be unique")
+        if not self.min_cnt <= len(normalized) <= self.max_cnt:
+            raise ValueError(
+                f"Choose between {self.min_cnt} and {self.max_cnt} candidates, "
+                f"got {len(normalized)}"
+            )
+        if any(index < 0 or index >= len(self.candidates) for index in normalized):
+            raise IndexError("Candidate index out of range")
+        return self._make_action([self.candidates[index] for index in normalized])
 
     def _make_action(self, chosen: list[Card]) -> ChooseCardAction:
         return ChooseCardAction(

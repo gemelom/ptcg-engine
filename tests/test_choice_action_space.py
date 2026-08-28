@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import itertools
 
+import pytest
+
 from ptcg import PokemonTCG
 from ptcg.core.action import (
     ChooseCardAction,
@@ -78,3 +80,37 @@ def test_environment_keeps_choice_action_space_lazy():
 
     assert isinstance(info["raw_available_actions"], ChooseCardActionSpace)
     assert env.cur_available_actions is info["raw_available_actions"]
+
+
+def test_choice_action_space_builds_action_from_candidate_indices_without_iteration():
+    candidates = [make_card("SVE-002") for _ in range(30)]
+    actions, _prompt = choose_card_actions(
+        PlayerId.PLAYER1,
+        PlayerId.PLAYER1,
+        0,
+        len(candidates),
+        candidates,
+    )
+
+    action = actions.action_for_candidate_indices([29, 0, 14])
+
+    assert action.chosen == [candidates[0], candidates[14], candidates[29]]
+    assert action in actions
+
+
+def test_choice_action_space_rejects_invalid_candidate_indices():
+    candidates = [make_card("SVE-002") for _ in range(3)]
+    actions, _prompt = choose_card_actions(
+        PlayerId.PLAYER1,
+        PlayerId.PLAYER1,
+        1,
+        2,
+        candidates,
+    )
+
+    with pytest.raises(ValueError, match="unique"):
+        actions.action_for_candidate_indices([0, 0])
+    with pytest.raises(ValueError, match="between 1 and 2"):
+        actions.action_for_candidate_indices([])
+    with pytest.raises(IndexError, match="out of range"):
+        actions.action_for_candidate_indices([3])

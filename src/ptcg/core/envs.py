@@ -470,6 +470,12 @@ class PokemonTCG:
         self._remember_available_actions(result)
         return result
 
+    def observe(self, viewer_id: PlayerId) -> dict[str, Any]:
+        """Return a detached observation fixed to one player's perspective."""
+        if not hasattr(self, "gamestate"):
+            raise RuntimeError("The environment must be reset before it can be observed")
+        return self.gamestate.get_obs(viewer_id)
+
     def set_seed(self, seed: int) -> None:
         """Set random seed for reproducibility.
 
