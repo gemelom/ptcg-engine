@@ -1,14 +1,5 @@
 # ptcg-engine
 
-<pre align="center">
-██████╗ ████████╗ ██████╗ ██████╗      ██████╗██╗     ██╗
-██╔══██╗╚══██╔══╝██╔════╝██╔════╝     ██╔════╝██║     ██║
-██████╔╝   ██║   ██║     ██║  ███╗    ██║     ██║     ██║
-██╔═══╝    ██║   ██║     ██║   ██║    ██║     ██║     ██║
-██║        ██║   ╚██████╗╚██████╔╝    ╚██████╗███████╗██║
-╚═╝        ╚═╝    ╚═════╝ ╚═════╝      ╚═════╚══════╝╚═╝
-</pre>
-
 [![CI](https://github.com/gemelom/ptcg-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/gemelom/ptcg-engine/actions/workflows/ci.yml)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f.svg)](LICENSE)
