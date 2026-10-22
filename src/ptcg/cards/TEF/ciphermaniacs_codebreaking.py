@@ -20,8 +20,10 @@ class TEF145CiphermaniacsCodebreaking(SupporterCard):
         player = current_player(state)
         actions = []
 
-        # Can use if no supporter played this turn and not first turn
-        if not player.supporterPlayedTurn and not player.firstTurn and len(player.left) >= 2:
+        # The first-player Supporter lock is expressed by supporterPlayedTurn
+        # (set by the environment); the player going second may use Supporters on
+        # their first turn. firstTurn is true for both seats and must not gate this.
+        if not player.supporterPlayedTurn and len(player.left) >= 2:
             actions.append(UseSupporterAction(state.turn, self))
 
         return actions

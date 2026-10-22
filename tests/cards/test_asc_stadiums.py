@@ -44,8 +44,9 @@ def test_team_rockets_watchtower_discards_to_player_who_played_it():
     assert [card.name for card in state.player2.discard] == ["Team Rocket's Watchtower"]
 
 
-def test_team_rockets_watchtower_is_unavailable_on_first_turn():
+def test_team_rockets_watchtower_is_once_per_turn():
     watchtower = make_card("ASC-210")
     state = make_state(PlayerZones(hand=[watchtower]))
+    state.player1.stadiumPlayedTurn = True
 
     assert watchtower.get_actions(state) == []

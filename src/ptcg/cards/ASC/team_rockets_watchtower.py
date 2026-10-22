@@ -17,7 +17,9 @@ class ASC210TeamRocketsWatchtower(StadiumCard):
 
     def get_actions(self, state):
         player = current_player(state)
-        if not player.firstTurn and self in player.hand:
+        # Stadium cards have no first-turn restriction; only the usual one-per-turn
+        # limit applies. firstTurn is true for both seats and must not gate this.
+        if not player.stadiumPlayedTurn and self in player.hand:
             return [PutStadiumAction(player.id, self)]
         return []
 
@@ -37,6 +39,7 @@ class ASC210TeamRocketsWatchtower(StadiumCard):
                 state,
             )
             self.playedFrom = player.id
+            player.stadiumPlayedTurn = True
 
         elif isinstance(action, DiscardStadiumAction):
             player = current_player(state)

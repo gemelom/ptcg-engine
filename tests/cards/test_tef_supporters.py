@@ -1,6 +1,7 @@
 import pytest
 
 from ptcg.core.action import UseSupporterAction
+from ptcg.core.enums import PlayerId
 from tests.helpers.cards import make_card
 from tests.helpers.generator_driver import drive_choices
 from tests.helpers.state_builder import PlayerZones, make_state
@@ -38,10 +39,15 @@ def test_ciphermaniacs_codebreaking_puts_two_chosen_cards_on_top_of_deck():
     assert state.player1.supporterPlayedTurn is True
 
 
-def test_ciphermaniacs_codebreaking_unavailable_on_first_turn():
+def test_ciphermaniacs_codebreaking_unavailable_for_first_player():
     card = make_card("TEF-145")
-    state = make_state(PlayerZones(hand=[card], left=[make_card("PAF-007"), make_card("PAF-008")]))
+    state = make_state(
+        PlayerZones(hand=[card], left=[make_card("PAF-007"), make_card("PAF-008")]),
+        first_player_id=PlayerId.PLAYER1,
+    )
     state.player1.firstTurn = True
+    # The environment applies the opening Supporter lock for the first player.
+    state.player1.supporterPlayedTurn = True
 
     assert card.get_actions(state) == []
 
