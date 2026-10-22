@@ -492,7 +492,11 @@ def reduce_evolve_pokemon_action(
     evolving_card.energy.clear()
     evolving_card.attachment.clear()
 
-    evolved_card.evolved.append(evolving_card)
+    # Keep the whole evolution chain below the new stage: any cards already
+    # under the previous evolution must stay accounted for. Store them oldest
+    # first and the immediate pre-evolution last, matching the physical stack
+    # order (Basic at the bottom, newest stage on top).
+    evolved_card.evolved = [*getattr(evolving_card, "evolved", []), evolving_card]
 
     if evolving_card.position == PokemonPosition.ACTIVE:
         player.active[evolving_card.index - 1] = evolved_card

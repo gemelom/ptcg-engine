@@ -124,7 +124,9 @@ class PAR178TechnicalMachineEvolution(ToolCard):
 
         pokemon.energy.clear()
         pokemon.attachment.clear()
-        evolution_card.evolved.append(pokemon)
+        # This counts as evolving: keep the cards already under this Pokemon,
+        # oldest first, with the replaced card last (same order as reducer.py).
+        evolution_card.evolved = [*getattr(pokemon, "evolved", []), pokemon]
 
         if pokemon.position == PokemonPosition.ACTIVE:
             player.active[pokemon.index - 1] = evolution_card
