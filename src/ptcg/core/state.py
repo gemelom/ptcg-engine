@@ -18,6 +18,7 @@ class State:
     player1: Player
     player2: Player
     turn: PlayerId | None = None
+    first_player_id: PlayerId | None = None
     timestep: int = 0
     turn_number: int = 0
     is_choosing_card: bool = False

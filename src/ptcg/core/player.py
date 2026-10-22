@@ -205,13 +205,20 @@ class Player:
         # Check if active Pokémon's abilities are suppressed (e.g., by Flutter Mane's Midnight Fluttering)
         active_suppressed = is_active_ability_suppressed(self, state)
 
+        # Only the player who went first is barred from attacking on turn 1;
+        # the player who goes second may attack. ``firstTurn`` is true for both
+        # players' first turn (evolution rules use it), so also check the seat
+        # that won the opening flip. States built without a recorded first
+        # player keep the conservative lock.
+        first_turn_attack_lock = self.firstTurn and state.first_player_id in (None, self.id)
+
         # pokemon ability & skill
         for card in self.active + self.bench:
             card_actions = card.get_actions(state)
             # Filter out UseAbilityAction for active Pokémon if suppressed by opponent
             if card in self.active and active_suppressed:
                 card_actions = [a for a in card_actions if not isinstance(a, UseAbilityAction)]
-            if self.firstTurn:
+            if first_turn_attack_lock:
                 # Allow specific attacks on first turn for certain cards
                 filtered_actions = []
                 for action in card_actions:

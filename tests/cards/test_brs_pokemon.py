@@ -367,6 +367,7 @@ def test_raichu_v_dynamic_spark_unavailable_on_first_turn():
     raichu.energy = [CardType.LIGHTNING, CardType.LIGHTNING]
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[raichu]), PlayerZones(active=[defender]))
+    state.first_player_id = state.turn
 
     assert [
         action.attack.name

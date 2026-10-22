@@ -23,10 +23,11 @@ def make_state(
     player1: PlayerZones | None = None,
     player2: PlayerZones | None = None,
     turn: PlayerId = PlayerId.PLAYER1,
+    first_player_id: PlayerId | None = None,
 ) -> State:
     p1 = _make_player(PlayerId.PLAYER1, player1 or PlayerZones())
     p2 = _make_player(PlayerId.PLAYER2, player2 or PlayerZones())
-    return State(player1=p1, player2=p2, turn=turn)
+    return State(player1=p1, player2=p2, turn=turn, first_player_id=first_player_id)
 
 
 def _make_player(player_id: PlayerId, zones: PlayerZones) -> Player:

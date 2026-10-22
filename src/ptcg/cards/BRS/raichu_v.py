@@ -98,8 +98,10 @@ class BRS158RaichuV(PokemonCard):
                                 ]
                             )
                     else:
-                        # Regular attack check - not on first turn
-                        if not player.firstTurn:
+                        # Only the player who went first is barred from attacking on turn 1.
+                        if not (
+                            player.firstTurn and state.first_player_id in (None, player.id)
+                        ):
                             actions.extend(
                                 [
                                     AttackAction(state.turn, self, attack, target)

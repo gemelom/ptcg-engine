@@ -91,7 +91,10 @@ class SIT138LugiaV(PokemonCard):
                             [AttackAction(state.turn, self, attack, target) for target in targets]
                         )
                     else:
-                        if not player.firstTurn:
+                        # Only the player who went first is barred from attacking on turn 1.
+                        if not (
+                            player.firstTurn and state.first_player_id in (None, player.id)
+                        ):
                             actions.extend(
                                 [
                                     AttackAction(state.turn, self, attack, target)

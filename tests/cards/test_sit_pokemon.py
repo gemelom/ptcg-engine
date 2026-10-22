@@ -234,6 +234,7 @@ def test_lugia_v_aero_dive_unavailable_on_first_turn():
     ]
     defender = make_card("PAF-054")
     state = make_state(PlayerZones(active=[lugia]), PlayerZones(active=[defender]))
+    state.first_player_id = state.turn
 
     assert [
         action.attack.name

@@ -297,6 +297,7 @@ class PokemonTCG:
         else:
             self.gamestate.turn = PlayerId.PLAYER2
             self.gamestate.player1.supporterPlayedTurn = False
+        self.gamestate.first_player_id = self.gamestate.turn
 
     def _log_game_start(self) -> None:
         player_name = f"{self.gamestate.turn}"[9:]
