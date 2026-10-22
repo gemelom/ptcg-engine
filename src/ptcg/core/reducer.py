@@ -24,6 +24,7 @@ from ptcg.core.action import (
     ChooseCardPrompt,
     EffectAction,
     EvolvePokemonAction,
+    MulliganDrawAction,
     PlayPokemonAction,
     RetreatAction,
     choose_card_actions,
@@ -544,6 +545,48 @@ def reduce_attach_energy_action(
             (player.id, CardPosition.HAND),
             (player.id, CardPosition.BENCH_ATTACHMENT, target.index),
             state,
+        )
+
+
+def reduce_mulligan_draw_action(action: MulliganDrawAction, state: State) -> None:
+    """Apply the setup-stage optional bonus draw for extra opponent mulligans.
+
+    The official rule lets the opponent draw one extra card per *extra*
+    mulligan (the opponent's count minus the chooser's own count, clamped at
+    zero). The draw is optional, so ``count=0`` is a legal action. Cards move
+    from the top of the choosing player's deck to their hand. Only the number
+    of cards drawn is recorded publicly: card identities stay hidden from the
+    other seat.
+    """
+    if action.playerId == PlayerId.PLAYER1:
+        player = state.player1
+    else:
+        player = state.player2
+
+    draw_count = max(0, min(action.count, len(player.left)))
+    if draw_count:
+        move_cards(
+            player.left[:draw_count],
+            (player.id, CardPosition.LEFT),
+            (player.id, CardPosition.HAND),
+            state,
+        )
+
+    mulligans = "mulligan" if action.max_count == 1 else "mulligans"
+    if draw_count:
+        cards = "card" if draw_count == 1 else "cards"
+        state.auto_events.append(
+            f"{player.id.name} drew {draw_count} bonus {cards} for "
+            f"{action.max_count} extra {mulligans}."
+        )
+    elif action.count == 0:
+        state.auto_events.append(
+            f"{player.id.name} declined the bonus draw for "
+            f"{action.max_count} extra {mulligans}."
+        )
+    else:  # pragma: no cover - construction caps count at the remaining deck size
+        state.auto_events.append(
+            f"{player.id.name} found no cards left to draw for the mulligan bonus."
         )
 
 

@@ -34,7 +34,7 @@ from typing import Any, Literal
 
 from loguru import logger
 
-from ptcg.core.action import Action, PlayPokemonAction
+from ptcg.core.action import Action, PlayPokemonAction, mulligan_draw_actions
 from ptcg.core.card import PokemonCard
 from ptcg.core.enums import Coin, PlayerId, PokemonPosition, Stage
 from ptcg.core.exceptions import GameTermination, InvalidActionError
@@ -43,6 +43,7 @@ from ptcg.core.recorder import GameRecorder
 from ptcg.core.reducer import (
     choose_card_actions,
     reduce_choose_card_actions,
+    reduce_mulligan_draw_action,
     reduce_play_pokemon_action,
 )
 from ptcg.core.state import State
@@ -283,11 +284,65 @@ class PokemonTCG:
                 PlayPokemonAction(player.id, pokemon[0], PokemonPosition.ACTIVE), self.gamestate
             )
 
+        # Official setup order: the bonus draw for mulligans happens after the
+        # Active Pokémon (and, in card play, the Bench and Prize cards) are set,
+        # before the first turn begins.
+        yield from self._run_mulligan_compensation()
+
         self.start_stage = False
         self._determine_first_player()
         self._log_game_start()
 
         # Don't return anything - let the main loop yield the initial state
+
+    def _run_mulligan_compensation(self) -> Generator[Any, Any, Any]:
+        """Offer the optional bonus draw for the opponent's extra mulligans.
+
+        Official timing (2026 Pokémon TCG Rulebook, "Full details of taking a
+        mulligan"): after the player who did not start over has finished setting
+        up to play, and before the first turn, that player *may* draw a card for
+        each extra mulligan their opponent took. When both players mulliganed,
+        the rulebook restarts both players together and gives compensation only
+        for the mulligans beyond the opponent's count, so this seat's maximum is
+        ``max(0, opponent_mulligan_count - own_mulligan_count)``. Only the seat
+        with fewer mulligans can qualify.
+
+        ``Player.shuffle`` already deals the seven-card hand and the six Prize
+        cards, so the Active placement in ``_run_start_stage`` is the last setup
+        decision and this stage runs right after it. Seat order is fixed, and
+        declining is always legal and listed first.
+        """
+        seat_pairs = (
+            (self.gamestate.player1, self.gamestate.player2),
+            (self.gamestate.player2, self.gamestate.player1),
+        )
+        for chooser, mulliganer in seat_pairs:
+            bonus_count = mulliganer.mulligan_count - chooser.mulligan_count
+            if bonus_count <= 0:
+                continue
+
+            actions = mulligan_draw_actions(
+                chooser.id,
+                chooser,
+                bonus_count,
+                len(chooser.left),
+            )
+            if not actions:
+                continue
+            self.gamestate.turn = chooser.id
+            obs = self.gamestate.get_obs(chooser.id)
+            info = {
+                "is_choosing_card": False,
+                "raw_available_actions": actions,
+                "turn": self.gamestate.turn,
+                "auto_executed": list(self.gamestate.auto_events),
+            }
+            if self.expose_full_state:
+                info["full_state"] = self.gamestate
+            self.gamestate.auto_events = []
+
+            action = yield (obs, 0, False, info)
+            reduce_mulligan_draw_action(action, self.gamestate)
 
     def _determine_first_player(self) -> None:
         """Determine which player goes first via coin flip."""

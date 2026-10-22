@@ -49,6 +49,11 @@ class Player:
 
         self.reward = Reward()
 
+        # Number of opening-hand redeals during setup. The official rule gives
+        # the opponent one optional bonus draw per *extra* mulligan; the count
+        # is consumed by the setup compensation stage in ``envs.py``.
+        self.mulligan_count = 0
+
         # Action trajectory tracking for each turn
         self.current_turn_actions: list[dict[str, Any]] = []
         self.turn_action_history: list[list[dict[str, Any]]] = []
@@ -134,6 +139,13 @@ class Player:
     def shuffle(self, rng=None):
         """
         shuffle when game start until hand is valid
+
+        Each failed deal is one official mulligan: the hand is revealed and
+        shuffled back, then seven new cards are drawn. The loop below reshuffles
+        the whole (still complete) deck, which has the same distribution as
+        shuffling the hand back in. The number of failed deals is recorded on
+        ``mulligan_count`` so the setup stage can offer the opponent its
+        optional bonus draw. This keeps the RNG call sequence unchanged.
         """
         self.deck_composition.validate()
         rng = rng or random
@@ -141,6 +153,7 @@ class Player:
         def can_play(card):
             return card.superType == SuperType.POKEMON and card.stage == Stage.BASIC
 
+        self.mulligan_count = 0
         while True:
             rng.shuffle(self.deck)
             self.hand = self.deck[:7]
@@ -148,6 +161,7 @@ class Player:
             self.left = self.deck[13:]
             if any(can_play(card) for card in self.hand):
                 break
+            self.mulligan_count += 1
 
         def set_cards_position(cards, position):
             for idx, card in enumerate(cards):

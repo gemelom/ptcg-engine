@@ -255,6 +255,82 @@ class PassTurn(Action):
         return f"{self._player_str()} passed the turn"
 
 
+class MulliganDrawAction(Action):
+    """Setup-only choice: draw 0..N bonus cards for extra opponent mulligans.
+
+    Official rulebook: the player who did not start over *may* draw one extra
+    card for each **extra** mulligan their opponent took. When both players
+    mulliganed, the simultaneous restarts do not count, so the compensation is
+    ``max(0, opponent_mulligans - own_mulligans)`` (see ADR-0003). The draw is
+    optional, so ``count=0`` (decline) is offered as a legal action and is
+    listed first.
+
+    params:
+        playerId (PlayerId): the seat choosing how many cards to draw
+        source (Player): the choosing player
+        count (int): the number of bonus cards this action draws
+        max_count (int): the official maximum for this seat (extra mulligans)
+    """
+
+    count: int
+    max_count: int
+
+    def __init__(
+        self,
+        playerId: PlayerId,
+        source: Card | Player,
+        count: int,
+        max_count: int,
+    ) -> None:
+        super().__init__(playerId, ActionType.MULLIGAN_DRAW_ACTION)
+        if max_count < 0:
+            raise ValueError(f"max_count must be non-negative, got {max_count}")
+        if count < 0 or count > max_count:
+            raise ValueError(f"count must be between 0 and {max_count}, got {count}")
+        self.source = source
+        self.count = count
+        self.max_count = max_count
+
+    def to_nl(self) -> str:
+        mulligans = "mulligan" if self.max_count == 1 else "mulligans"
+        if self.count == 0:
+            return (
+                f"{self._player_str()} declined the bonus draw for "
+                f"{self.max_count} extra {mulligans}"
+            )
+        cards = "card" if self.count == 1 else "cards"
+        return (
+            f"{self._player_str()} drew {self.count} bonus {cards} for "
+            f"{self.max_count} extra {mulligans}"
+        )
+
+    def _extra_dict(self) -> dict[str, Any]:
+        return {"count": self.count, "max_count": self.max_count}
+
+
+def mulligan_draw_actions(
+    playerId: PlayerId,
+    source: Card | Player,
+    bonus_count: int,
+    available_cards: int,
+) -> list[MulliganDrawAction]:
+    """Build the legal setup choice for this seat's mulligan compensation.
+
+    ``bonus_count`` is the official maximum: the opponent's mulligan count
+    minus the chooser's own mulligans (clamped at zero by the caller). A deck
+    can only supply the cards it has left, so the offered range is capped at
+    ``available_cards``. ``count=0`` is always first so declining is always
+    legal.
+    """
+    if bonus_count <= 0:
+        return []
+    max_draw = max(0, min(bonus_count, available_cards))
+    return [
+        MulliganDrawAction(playerId, source, count, bonus_count)
+        for count in range(max_draw + 1)
+    ]
+
+
 class ChooseCardAction(Action):
     """
     Choose card(s) from a list of candidates.

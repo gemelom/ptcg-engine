@@ -110,6 +110,7 @@ class ActionType(Enum):
 
     # TODO: Extras
     CHOOSE_CARD_ACTION = 15
+    MULLIGAN_DRAW_ACTION = 16  # setup-only: optional bonus draw for opponent mulligans
 
 
 class AbilityType(Enum):
